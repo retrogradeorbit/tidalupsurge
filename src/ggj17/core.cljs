@@ -26,16 +26,6 @@
 
 (defonce state (atom {:text "Hello world!"}))
 
-(defonce canvas
-  (c/init
-   {:expand true
-    :engine :auto
-    :layers [:bg :world :float :ui]
-    :background 0x505050
-    }))
-
-
-
 (def fragment-shader-glsl
   "
 
