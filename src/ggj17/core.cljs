@@ -86,9 +86,28 @@
 
 (def scale 3)
 
+(defn make-background []
+  (let [bg (js/PIXI.Graphics.)
+        border-colour 0x000000
+        width 32
+        height 32
+        full-colour 0xff0000 
+        ]
+    (doto bg
+      (.beginFill 0xff0000)
+      (.lineStyle 0 border-colour)
+      (.drawRect 0 0 width height)
+      (.lineStyle 0 border-colour)
+      (.beginFill full-colour)
+      (.drawRect 0 0 32 32)
+      .endFill)
+    (.generateTexture bg false)))
+
+
 (defonce main
-  (go-until-reload
-   state
+  (go
+    ;-until-reload
+   ;state
                                         ; load resource url with tile sheet
    (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
 
@@ -97,10 +116,12 @@
     assets/sprites)
 
    (m/with-sprite :player
-     [player (s/make-sprite :boat
+     [
+      bg (s/make-sprite (make-background) :scale 100)
+      player (s/make-sprite :boat
                             :scale scale
                             :x 0 :y 0)]
-      ;(set! (.-filters main) (make-array (wave-line [1 1])))
+     (set! (.-filters bg) (make-array (wave-line [1 1])))
      (while true
        (<! (e/next-frame)))
 
