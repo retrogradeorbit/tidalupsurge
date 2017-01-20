@@ -30,26 +30,33 @@
 
   "
 
-precision mediump float;
-varying vec2 vTextureCoord;
-varying vec4 vColor;
+  precision mediump float;
+  varying vec2 vTextureCoord;
+  varying vec4 vColor;
 
-uniform float amp;
-uniform float freq;
-uniform float phase;
+  uniform float amp;
+  uniform float freq;
+  uniform float phase;
 
-void main()
-{
-  if (vTextureCoord.y < (0.5 +  amp * sin(freq * vTextureCoord.x + phase)))
+    vec3 hsv2rgb (vec3 c)
+    {
+      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    }
+
+  void main()
   {
-    gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0);
+    if (vTextureCoord.y < (0.5 +  amp * sin(freq * vTextureCoord.x + phase)))
+    {
+      gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
+    }
+    else
+    {
+      // More green, less blue as we get to the bottom
+      gl_FragColor = vec4(0.0, vTextureCoord.y * 0.1, 1.0 - vTextureCoord.y, 1.0);
+    }
   }
-  else
-  {
-    // More green, less blue as we get to the bottom
-    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.1, 1.0 - vTextureCoord.y, 1.0);
-  }
-}
 "
 )
 
