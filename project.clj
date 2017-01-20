@@ -44,11 +44,20 @@
                ;; production. You can build this with:
                ;; lein cljsbuild once min
                {:id "min"
-                :source-paths ["src"]
-                :compiler {:output-to "resources/public/js/compiled/ggj17.js"
+                :source-paths ["src"
+                               "checkouts/infinitelives.utils/src"
+                               "checkouts/infinitelives.pixi/src"
+                               ]
+                :compiler {:output-to "build/js/compiled/ggj17.js"
                            :main ggj17.core
                            :optimizations :advanced
-                           :pretty-print false}}]}
+                           :externs ["externs/w3c_audio.js" "externs/w3c_gamepad.js" "externs/pixi.ext.js"]
+
+                                        ;:pseudo-names true
+                                        ;:pretty-print true
+
+                           :pretty-print false}}
+              ]}
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"
              ;; :server-port 3449 ;; default

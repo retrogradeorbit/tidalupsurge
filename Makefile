@@ -8,7 +8,7 @@ SFX=$(subst resources/public,build,$(SFX_SOURCE))
 ME=$(shell basename $(shell pwd))
 REPO=git@github.com:retrogradeorbit/ggj17.git
 
-all: $(APP) $(CSS) $(IDX) $(IMG) $(SFX) $(MUSIC)
+all: $(APP) $(CSS) $(IDX)  #$(IMG) $(SFX) $(MUSIC)
 
 $(CSS): resources/public/css/style.css
 	mkdir -p $(dir $(CSS))
