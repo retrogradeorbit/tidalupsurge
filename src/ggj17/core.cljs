@@ -13,7 +13,9 @@
             [ggj17.assets :as assets]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
-                   [infinitelives.pixi.macros :as m]))
+                   [infinitelives.pixi.macros :as m]
+                   [ggj17.async :refer [go-while go-until-reload]]
+                   ))
 
 (enable-console-print!)
 
