@@ -36,9 +36,12 @@ uniform float amp;
 uniform float freq;
 uniform float phase;
 
+uniform float width;
+uniform float height;
+
 void main()
 {
-  if (vTextureCoord.y < (0.5 +  amp * sin(freq * vTextureCoord.x + phase)))
+  if (vTextureCoord.y < (0.5 + (amp / height) * sin(((640.0 * freq / width) * vTextureCoord.x + phase))))
   {
     gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0);
   }
@@ -56,9 +59,11 @@ void main()
    nil
    #js [fragment-shader-glsl]
    #js {
-        "amp" #js {"type" "1f" "value" 10.0}
-        "freq" #js {"type" "1f" "value" 10.0}
+        "amp" #js {"type" "1f" "value" 100.0}
+        "freq" #js {"type" "1f" "value" 100.0}
         "phase" #js {"type" "1f" "value" 0.0}
+        "width" #js {"type" "1f" "value" 300}
+        "height" #js {"type" "1f" "value" 300}
 
         }))
 
@@ -97,41 +102,68 @@ void main()
 
 
 (defn set-shader-uniforms [shader fnum]
-  (set! (.-uniforms.amp.value shader) (* 0.1 (Math/sin (/ fnum 20))))
+  (set! (.-uniforms.amp.value shader) (* 30 (Math/sin (/ fnum 20))))
   (set! (.-uniforms.freq.value shader) 10.0)
   (set! (.-uniforms.phase.value shader) (* fnum 0.03))
+  (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
+  (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
   )
 
 (defn set-texture-filter [texture filter]
   (set! (.-filters texture) (make-array filter)))
 
-(def main
-  (go ;-until-reload
-   ;state
+(defonce main
+  (go                              ;-until-reload
+                                        ;state
                                         ; load resource url with tile sheet
-   (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
+    (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
 
-   (t/load-sprite-sheet!
-    (r/get-texture :spritesheet :nearest)
-    assets/sprites)
+    (t/load-sprite-sheet!
+     (r/get-texture :spritesheet :nearest)
+     assets/sprites)
 
-   (m/with-sprite :player
-     [
-      bg (s/make-sprite (make-background) :scale 100)
-      player (s/make-sprite :boat
-                            :scale scale
-                            :x 0 :y 0)]
+    (m/with-sprite :player
+      [
+       bg (s/make-sprite (make-background) :scale 100)
+       player (s/make-sprite :boat
+                             :scale scale
+                             :x 0 :y 0)]
 
-     (let [shader (wave-line [1 1])]
-       (set-texture-filter bg shader)
-       (loop [fnum 0]
-         (set-shader-uniforms shader fnum)
-         (<! (e/next-frame))
-         (recur (inc fnum))
-         ))
+      (let [shader (wave-line [1 1])
+            ]
+        (set-texture-filter bg shader)
+        (loop [fnum 0]
+          (let [amp (* 30 (Math/sin (/ fnum 20)))
+                height (.-innerHeight js/window)
+                width (.-innerWidth js/window)
+                phase (* fnum 0.03)
+                freq 10
+                ]
+            (set-shader-uniforms shader fnum)
 
-     )
+            (s/set-pos! player 0
+                        (- (* height (*
+                                      (/ amp height)
+                                      (Math/sin (+ (/ (* 640 freq 0.5) width) phase)))) 20)
 
-   ))
+                        )
+
+            (s/set-rotation!
+             player
+             (Math/atan
+              (*
+                  0.2
+                  (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
+              )
+             )
+            
+           
+            (<! (e/next-frame))
+            (recur (inc fnum)))
+          ))
+
+      )
+
+    ))
 
 
