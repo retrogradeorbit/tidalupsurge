@@ -20,8 +20,6 @@
 
 (enable-console-print!)
 
-(println "This text is printed from src/ggj17/core.cljs. Go ahead and edit it and see reloading in action.")
-
 ;; define your app data so that it doesn't get over-written on reload
 
 (defonce state (atom {:text "Hello world!"}))
@@ -104,8 +102,7 @@ void main()
   )
 
 (defn set-texture-filter [texture filter]
-  (set! (.-filters texture) (make-array filter ))
-  )
+  (set! (.-filters texture) (make-array filter)))
 
 (def main
   (go ;-until-reload

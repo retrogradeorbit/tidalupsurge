@@ -54,13 +54,14 @@
                                ]
                 :compiler {:output-to "build/js/compiled/ggj17.js"
                            :main ggj17.core
-                           :optimizations :advanced
+                           :optimizations :simple ;:advanced
+                           :pretty-print false
                            :externs ["externs/w3c_audio.js" "externs/w3c_gamepad.js" "externs/pixi.ext.js"]
 
-                                        ;:pseudo-names true
-                                        ;:pretty-print true
+                                       ; :pseudo-names true
+                                       ; :pretty-print true
 
-                           :pretty-print false}}
+                           }}
               ]}
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"

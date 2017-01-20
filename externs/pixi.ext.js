@@ -1360,9 +1360,9 @@ PIXI.RenderTarget.prototype = {
   "destroy": function () {}
 };
 PIXI.AbstractFilter.prototype = {
-  "getShader": function () {},
-  "applyFilter": function () {},
-  "syncUniform": function () {}
+    "getShader": function () {},
+    "applyFilter": function () {},
+    "syncUniform": function () {}
 };
 PIXI.FXAAFilter.prototype = {
   "constructor": function () {},
@@ -2110,3 +2110,5 @@ PIXI.accessibility.AccessibilityManager.prototype = {
   "_onMouseMove": function () {},
   "destroy": function () {}
 };
+
+uniforms = {}
