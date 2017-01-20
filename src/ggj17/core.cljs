@@ -23,12 +23,12 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:text "Hello world!"}))
+(defonce state (atom {:text "Hello world!"}))
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
+  (swap! state update-in [:__figwheel_counter] inc)
   )
 
 (defonce bg-colour 0x52c0e5)
@@ -41,22 +41,23 @@
 (def scale 3)
 
 (defonce main
-  (go
+  (go-until-reload
+   state
                                         ; load resource url with tile sheet
-    (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
+   (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
     
-    (t/load-sprite-sheet!
-     (r/get-texture :spritesheet :nearest)
-     assets/sprites)
+   (t/load-sprite-sheet!
+    (r/get-texture :spritesheet :nearest)
+    assets/sprites)
 
-    (m/with-sprite :player
-      [player (s/make-sprite :boat
-                             :scale scale
-                             :x 0 :y 0)]
-      (while true
-        (<! (e/next-frame)))
+   (m/with-sprite :player
+     [player (s/make-sprite :boat
+                            :scale scale
+                            :x 0 :y 0)]
+     (while true
+       (<! (e/next-frame)))
 
-      )
+     )
     
-    ))
+   ))
 
