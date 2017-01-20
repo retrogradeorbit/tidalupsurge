@@ -27,8 +27,8 @@
           (list? head) [(process-body test head) tail]
           (vector? head) [(vec (process-body test head)) tail]
           (map? head) [(into {} (process-body test (seq head))) tail]
-          (= '<! head) ['fortress.async/<!* (cons test tail)]
-          (= '>! head) ['fortress.async/>!* (cons test tail)]
+          (= '<! head) ['ggj17.async/<!* (cons test tail)]
+          (= '>! head) ['ggj17.async/>!* (cons test tail)]
           :default [head tail])]
     (if processed-tail
       (cons processed-head (process-body test processed-tail))
