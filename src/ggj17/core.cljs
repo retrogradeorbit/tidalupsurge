@@ -1,7 +1,17 @@
 (ns ggj17.core
   (:require [infinitelives.pixi.canvas :as c]
             [infinitelives.pixi.resources :as r]
-            [infinitelives.pixi.texture :as t])
+            [infinitelives.pixi.texture :as t]
+            [infinitelives.pixi.tilemap :as tm]
+            [infinitelives.pixi.sprite :as s]
+            [infinitelives.utils.events :as e]
+            [infinitelives.utils.vec2 :as vec2]
+            [infinitelives.utils.gamepad :as gp]
+            [infinitelives.utils.pathfind :as path]
+            [infinitelives.utils.console :refer [log]]
+
+            [ggj17.assets :as assets]
+            )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]))
 
@@ -75,21 +85,38 @@
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
   )
 
-(defonce bg-colour 0x5D0711)
+(defonce bg-colour 0x52c0e5)
 
-(defonce canvas (c/init {:layers [:bg :tilemap :ui]
+(defonce canvas
+  (c/init {:layers [:bg :ocean :player :ui]
            :background bg-colour
            :expand true}))
 
+(def scale 3)
+
 (defonce main
   (go
-    ; load resource url with tile sheet
+                                        ; load resource url with tile sheet
     (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
 
     #_ (t/load-sprite-sheet!
      (r/get-texture :notlink :nearest)
      hero)
 
-	(set! (.-filters main) (make-array (wave-line [1 1])))
+    (t/load-sprite-sheet!
+     (r/get-texture :spritesheet :nearest)
+     assets/sprites)
+
+    (m/with-sprite :player
+      [player (s/make-sprite :boat
+                             :scale scale
+                             :x 0 :y 0)]
+
+      ;(set! (.-filters main) (make-array (wave-line [1 1])))
+
+      (while true
+        (<! (e/next-frame)))
+
+      )
 
     ))
