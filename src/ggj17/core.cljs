@@ -47,7 +47,7 @@ void main()
   else
   {
     // More green, less blue as we get to the bottom
-    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.5, vTextureCoord.y, 1.0);
+    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.1, 1.0 - vTextureCoord.y, 1.0);
   }
 }
 "
