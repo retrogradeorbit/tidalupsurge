@@ -26,78 +26,42 @@
 
 (defonce state (atom {:text "Hello world!"}))
 
-(def fragment-shader-glsl2
-  "
-
-	#define PROCESSING_COLOR_SHADER
-
-	uniform float time;
-	uniform vec2 resolution;
-	uniform vec2 colorMult;
-	uniform float coeffx;
-	uniform float coeffy;
-	uniform float coeffz;
-
-
-	void main( void ) {
-
-		vec2 position = gl_FragCoord.xy / resolution.xy;
-
-		float color = 0.0;
-		color += sin( position.x * cos( time / 15.0 ) * 10.0 )  +  cos( position.y * cos( time / 15.0 ) * coeffx );
-		color += sin( position.y * sin( time / 10.0 ) * coeffz )  +  cos( position.x * sin( time / 25.0 ) * coeffy );
-		color += sin( position.x * sin( time / 50.0 ) * coeffx )  +  sin( position.y * sin( time / 35.0 ) * coeffz );
-
-		color *= sin( time / 10.0 ) * 0.5;
-
-		float r = color;
-		float g = color * colorMult.y;
-		float b = sin( color + time / 2.0 ) * colorMult.x;
-
-		gl_FragColor = vec4(r, g, b, 1.0 );
-
-	}
-
-  "
-)
-
 (def fragment-shader-glsl
 
   "
+
 precision mediump float;
-varying vec4 vColor;
 varying vec2 vTextureCoord;
-uniform sampler2D u_texture; //diffuse map
-uniform sampler2D u_lightmap;   //light map
-uniform vec2 resolution; //resolution of screen
-uniform vec4 ambientColor; //ambient RGB, alpha channel is intensity
-uniform float alpha;
-uniform float fire;
-void main() {
-    // the lavers base piel colour
-    vec4 diffuseColor = texture2D(u_texture, vTextureCoord);
-    // the light at this point's colour
-    vec2 lighCoord = (gl_FragCoord.xy / resolution.xy);
-    vec4 light = texture2D(u_lightmap, vTextureCoord);
-    float intensity = light.r * fire;
-    vec3 factor=vec3(intensity, intensity, intensity);
-    vec3 avec = vec3(alpha, alpha, alpha);
-    vec3 inv_avec = vec3(1.0-alpha, 1.0-alpha, 1.0-alpha);
-    vec3 finalColor = diffuseColor.rgb * factor * vec3(alpha, alpha, alpha)
-                    + diffuseColor.rgb * inv_avec;
-    gl_FragColor = vec4(finalColor, diffuseColor.a); // + vec4(finalColor, diffuseColor.a * alpha);
+varying vec4 vColor;
+
+uniform float amp;
+uniform float freq;
+uniform float phase;
+
+void main()
+{
+  if (vTextureCoord.y < (0.5 +  amp * sin(freq * vTextureCoord.x + phase)))
+  {
+    gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0);
+  }
+  else
+  {
+    gl_FragColor = vec4(0.0, 0.0, 0.6, 1.0);
+  }
 }
 "
-
 )
 
 (defn wave-line [resolution]
   (js/PIXI.AbstractFilter.
    nil
    #js [fragment-shader-glsl]
-   #js {}))
+   #js {
+        "amp" #js {"type" "1f" "value" 10.0}
+        "freq" #js {"type" "1f" "value" 10.0}
+        "phase" #js {"type" "1f" "value" 0.0}
 
-
+        }))
 
 
 (defn on-js-reload []
@@ -133,9 +97,18 @@ void main() {
     (.generateTexture bg false)))
 
 
-(defonce main
-  (go
-    ;-until-reload
+(defn set-shader-uniforms [shader fnum]
+  (set! (.-uniforms.amp.value shader) (* 0.1 (Math/sin (/ fnum 20))))
+  (set! (.-uniforms.freq.value shader) 10.0)
+  (set! (.-uniforms.phase.value shader) (* fnum 0.03))
+  )
+
+(defn set-texture-filter [texture filter]
+  (set! (.-filters texture) (make-array filter ))
+  )
+
+(def main
+  (go ;-until-reload
    ;state
                                         ; load resource url with tile sheet
    (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
@@ -152,11 +125,12 @@ void main() {
                             :x 0 :y 0)]
 
      (let [shader (wave-line [1 1])]
-       (set! (.-uniforms.alpha.value shader) 1)
-       (set! (.-uniforms.fire.value shader) 0)
-       (set! (.-filters bg) (make-array shader ))
-       (while true
-         (<! (e/next-frame))))
+       (set-texture-filter bg shader)
+       (loop [fnum 0]
+         (set-shader-uniforms shader fnum)
+         (<! (e/next-frame))
+         (recur (inc fnum))
+         ))
 
      )
 
