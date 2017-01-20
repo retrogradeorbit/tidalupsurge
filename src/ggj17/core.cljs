@@ -44,7 +44,8 @@ void main()
   }
   else
   {
-    gl_FragColor = vec4(0.0, 0.0, 0.6, 1.0);
+    // More green, less blue as we get to the bottom
+    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.5, vTextureCoord.y, 1.0);
   }
 }
 "
@@ -82,7 +83,7 @@ void main()
         border-colour 0x000000
         width 32
         height 32
-        full-colour 0xff0000 
+        full-colour 0xff0000
         ]
     (doto bg
       (.beginFill 0xff0000)
