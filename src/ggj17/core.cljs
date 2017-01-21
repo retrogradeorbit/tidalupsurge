@@ -20,8 +20,6 @@
 
 (enable-console-print!)
 
-(println "This text is printed from src/ggj17/core.cljs. Go ahead and edit it and see reloading in action.")
-
 ;; define your app data so that it doesn't get over-written on reload
 
 (defonce state (atom {:text "Hello world!"}))
@@ -30,33 +28,35 @@
 
   "
 
-  precision mediump float;
-  varying vec2 vTextureCoord;
-  varying vec4 vColor;
+precision mediump float;
+varying vec2 vTextureCoord;
+varying vec4 vColor;
 
-  uniform float amp;
-  uniform float freq;
-  uniform float phase;
+uniform float amp;
+uniform float freq;
+uniform float phase;
+uniform float width;
+uniform float height;
 
-    vec3 hsv2rgb (vec3 c)
+vec3 hsv2rgb (vec3 c)
     {
       vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
       vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
       return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
     }
 
-  void main()
+void main()
+{
+  if (vTextureCoord.y < (0.5 + (amp / height) * sin(((640.0 * freq / width) * vTextureCoord.x + phase))))
   {
-    if (vTextureCoord.y < (0.5 +  amp * sin(freq * vTextureCoord.x + phase)))
-    {
-      gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
-    }
-    else
-    {
-      // More green, less blue as we get to the bottom
-      gl_FragColor = vec4(0.0, vTextureCoord.y * 0.1, 1.0 - vTextureCoord.y, 1.0);
-    }
+    gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
   }
+  else
+  {
+    // More green, less blue as we get to the bottom
+    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.5, vTextureCoord.y, 1.0);
+  }
+}
 "
 )
 
@@ -65,9 +65,11 @@
    nil
    #js [fragment-shader-glsl]
    #js {
-        "amp" #js {"type" "1f" "value" 10.0}
-        "freq" #js {"type" "1f" "value" 10.0}
+        "amp" #js {"type" "1f" "value" 100.0}
+        "freq" #js {"type" "1f" "value" 100.0}
         "phase" #js {"type" "1f" "value" 0.0}
+        "width" #js {"type" "1f" "value" 300}
+        "height" #js {"type" "1f" "value" 300}
 
         }))
 
@@ -106,52 +108,77 @@
 
 
 (defn set-shader-uniforms [shader fnum]
-  (set! (.-uniforms.amp.value shader) (* 0.1 (Math/sin (/ fnum 20))))
+  (set! (.-uniforms.amp.value shader) (* 30 (Math/sin (/ fnum 20))))
   (set! (.-uniforms.freq.value shader) 10.0)
   (set! (.-uniforms.phase.value shader) (* fnum 0.03))
+  ;(set! (.-uniforms.width.value shader) (.-innerWidth js/window))
+  ;(set! (.-uniforms.height.value shader) (.-innerHeight js/window))
   )
 
 (defn set-texture-filter [texture filter]
-  (set! (.-filters texture) (make-array filter ))
-  )
+  (set! (.-filters texture) (make-array filter)))
 
-(defn make-clouds [num-clouds]
-  (vec
-    (for [cloud-num (range num-clouds)]
-      (s/make-sprite :cloud
-                     :scale scale
-                     :x (- (* cloud-num 200) 1000) :y -300)
-   )))
+;(defn make-clouds [num-clouds]
+  ;(vec
+    ;(for [cloud-num (range num-clouds)]
+      ;(s/make-sprite :cloud
+                     ;:scale scale
+                     ;:x (- (* cloud-num 200) 1000) :y -300)
+   ;)))
 
-(def main
-  (go ;-until-reload
-   ;state
+(defonce main
+  (go                              ;-until-reload
+                                        ;state
                                         ; load resource url with tile sheet
-   (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
+    (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
 
-   (t/load-sprite-sheet!
-    (r/get-texture :spritesheet :nearest)
-    assets/sprites)
+    (t/load-sprite-sheet!
+     (r/get-texture :spritesheet :nearest)
+     assets/sprites)
 
-   (m/with-sprite :player
-     [
-      bg (s/make-sprite (make-background) :scale 100)
-      player (s/make-sprite :boat
-                            :scale scale
-                            :x 0 :y 0)]
-     (m/with-sprite-set :player
-      [clouds (make-clouds 10)]
+    (m/with-sprite :player
+      [
+       bg (s/make-sprite (make-background) :scale 100)
+       player (s/make-sprite :boat
+                             :scale scale
+                             :x 0 :y 0)]
+      ;(m/with-sprite-set :player
+        ;[clouds (make-clouds 10)]
 
-       (let [shader (wave-line [1 1])]
-         (set-texture-filter bg shader)
-         (loop [fnum 0]
-           (set-shader-uniforms shader fnum)
-           (<! (e/next-frame))
-           (recur (inc fnum))
-           )))
+        (let [shader (wave-line [1 1])
+              ]
+          (set-texture-filter bg shader)
+          (loop [fnum 0]
+            (let [amp (* 30 (Math/sin (/ fnum 20)))
+                  height (.-innerHeight js/window)
+                  width (.-innerWidth js/window)
+                  phase (* fnum 0.03)
+                  freq 10
+                  ]
+              (set-shader-uniforms shader fnum)
 
-     )
+              (s/set-pos! player 0
+                          (- (* height (*
+                                        (/ amp height)
+                                        (Math/sin (+ (/ (* 640 freq 0.5) width) phase)))) 20)
 
-   ))
+                          )
 
+              (s/set-rotation!
+               player
+               (Math/atan
+                (*
+                    0.2
+                    (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
+                )
+               )
+
+
+              (<! (e/next-frame))
+              (recur (inc fnum)))
+            ));)
+
+      )
+
+    ))
 
