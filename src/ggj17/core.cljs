@@ -20,6 +20,11 @@
 
 (enable-console-print!)
 
+
+(def amp 150)
+(def gravity (vec2/vec2 0 0.01))
+
+
 ;; define your app data so that it doesn't get over-written on reload
 
 (defonce state (atom {:text "Hello world!"}))
