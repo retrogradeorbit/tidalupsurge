@@ -291,32 +291,41 @@ void main()
                 player-on-wave?))))
    ))
 
-(defn slide-text [text]
+(defn slide-text [text-string]
     (go-while (not (state/playing?))
-      (loop [fnum 0]
-        (let [width (.-innerWidth js/window)
-              height (.-innerHeight js/window)
-              x-pos  (- width fnum)]
-          (s/set-x! text x-pos)
+       (m/with-sprite :ui
+        [text (pf/make-text :small text-string
+                                  :scale 3
+                                  :x 0 :y 150)]
 
+        ; Slide in
+        (loop [fnum 0]
+          (let [width (.-innerWidth js/window)
+                height (.-innerHeight js/window)
+                x-pos  (Math/pow 1.05 (- 150 fnum))]
+            (s/set-x! text x-pos)
+            (<! (e/next-frame))
+            (when (> x-pos 1)
+              (recur (inc fnum)))))
 
+        (<! (e/wait-frames 30))
 
-          (<! (e/next-frame))
-          (when (> x-pos 0)
-            (recur (inc fnum))
-            )
-          ))
-
-       ))
+        ; Slide out
+        (loop [fnum 0]
+          (let [width (.-innerWidth js/window)
+                height (.-innerHeight js/window)
+                x-pos  (- 0  (Math/pow 1.1 fnum))]
+            (s/set-x! text x-pos)
+            (<! (e/next-frame))
+            (when (> x-pos -1000)
+              (recur (inc fnum))))))))
 
 (defn instructions-thread []
   (go-while (not (state/playing?))
-    (m/with-sprite :ui
-      [start-text (pf/make-text :small "Press any button to start"
-                                 :scale 3
-                                 :x 0 :y 150)]
-      (while (not (state/playing?))
-        (<! (slide-text start-text))))))
+    (let [instructions ["Press any button to play" "Pull some sik flips" "Do not sink your dingy"]]
+      (loop [strings (cycle instructions)]
+        (<! (slide-text (first strings)))
+        (recur (rest strings))))))
 
 (defn titlescreen-thread [tidal upsurge]
   (go-while (not (start-pressed?))
