@@ -178,29 +178,19 @@ void main()
       [title-text (s/make-sprite  :title-text :scale scale :x 0 :y 0)]
         (s/set-y! title-text frame))))
 
+(defn on-wave? [pos width height amp freq phase]
+  (let [[x y] (vec2/as-vector pos)
+        wave-y (wave-y-position width height amp freq phase x)]
+    (>= y wave-y)))
 
 (defn constrain-pos [pos width height amp freq phase]
   (let [[x y] (vec2/as-vector pos)
         wave-y (wave-y-position width height amp freq phase x)]
-    (vec2/vec2 x (if (<= y wave-y) y wave-y))
-    )
-  )
+    (vec2/vec2 x (if (on-wave? pos width height amp freq phase) wave-y y))))
 
-(defn float-boat [player width freq phase constrained-pos]
-  (s/set-pos! player constrained-pos)
-
-  (s/set-rotation!
-   player
-   (Math/atan
-    (*
-        0.2
-        (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
-    )
-   ))
 
 (defn update-background [shader clouds-front clouds-back fnum amp freq phase fnum width height]
   (set-shader-uniforms shader fnum amp freq phase)
-
 
   (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
   (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
@@ -235,7 +225,10 @@ void main()
 
         (loop [fnum 0
                pos (vec2/vec2 0 0)
-               vel (vec2/vec2 0 0)]
+               vel (vec2/vec2 0 0)
+               heading 0
+               heading-delta 0
+               ]
           (let [
                 phase (/ fnum 15)
 
@@ -243,29 +236,47 @@ void main()
                 width (.-innerWidth js/window)
 
                 joy (get-player-input-vec2)
+                joy-x (vec2/get-x joy)
+                joy-y (vec2/get-y joy)
                 half-width (/ (.-innerHeight js/window) 2)
 
                 vel (vec2/add vel gravity)
                 pos2 (vec2/add pos vel)
 
+                player-on-wave? (on-wave? pos2 width height amp freq phase)
+
                 constrained-pos (constrain-pos pos2 width height amp freq phase)
 
                 ;; now calculate the vel we pass through to next iter from our changed position
                 vel (vec2/sub constrained-pos pos)
+
+                heading (if player-on-wave?
+                          (Math/atan (* 0.2 (Math/cos (+ (/ (* 640 freq 0.25) width) phase))))
+                          (+ heading heading-delta))
+
+                heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
+
+                ;; damped heading delta back to 0
+                heading-delta (if (neg? heading-delta)
+                                (min 0 (+ heading-delta 0.001))
+                                (max 0 (- heading-delta 0.001))
+                                )
                 ]
 
             (update-background shader clouds-front clouds-back fnum amp freq phase fnum width height)
 
+            ;(titlescreen fnum)
 
-            (if (playing?)
-              (float-boat player width freq phase constrain-pos)
-              (titlescreen fnum))
+			(s/set-pos! player constrained-pos)
+            (s/set-rotation! player heading)
 
 
             (<! (e/next-frame))
             (recur (inc fnum)
                    (vec2/add constrained-pos joy)
-                   vel))
+                   vel
+                   heading
+                   heading-delta))
           )))
 
       )
