@@ -268,8 +268,36 @@ void main()
                player-on-wave?)))
       ))
 
+(defn slide-text [text]
+    (go
+      (loop [fnum 0]
+        (let [width (.-innerWidth js/window)
+              height (.-innerHeight js/window)
+              x-pos  (- width fnum)]
+          (s/set-x! text x-pos)
+
+
+
+          (<! (e/next-frame))
+          (when (> x-pos 0)
+            (recur (inc fnum))
+            )
+          ))
+
+       ))
+
+(defn instructions-thread []
+  (go
+    (m/with-sprite :ui
+      [start-text (pf/make-text :small "Press space to start"
+                                 :scale 3
+                                 :x 0 :y 150)]
+      (while true
+        (<! (slide-text start-text))))))
+
 (defn titlescreen-thread [tidal upsurge]
   (go-while (not (start-pressed?))
+    (instructions-thread)
     (state/set-amp! 20)
      (loop [fnum 0]
       (let [
