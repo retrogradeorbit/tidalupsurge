@@ -219,6 +219,7 @@ void main()
                pos (vec2/vec2 0 0)
                vel (vec2/vec2 0 0)
                heading 0
+               heading-delta 0
                ]
           (let [
                 phase (/ fnum 15)                
@@ -243,7 +244,15 @@ void main()
 
                 heading (if player-on-wave?
                           (Math/atan (* 0.2 (Math/cos (+ (/ (* 640 freq 0.25) width) phase))))
-                          heading)
+                          (+ heading heading-delta))
+
+                heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
+
+                ;; damped heading delta back to 0
+                heading-delta (if (neg? heading-delta)
+                                (min 0 (+ heading-delta 0.001))
+                                (max 0 (- heading-delta 0.001))
+                                )
                 ]
             (set-shader-uniforms shader fnum amp freq phase)
 
@@ -252,7 +261,6 @@ void main()
             (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
             (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
 
-            (js/console.log "on-wave?" player-on-wave?)
             
             (s/set-rotation! player heading)
 
@@ -261,7 +269,8 @@ void main()
             (recur (inc fnum)
                    (vec2/add constrained-pos joy)
                    vel
-                   heading))
+                   heading
+                   heading-delta))
           )))
 
       )
