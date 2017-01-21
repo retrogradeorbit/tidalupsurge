@@ -200,6 +200,21 @@ void main()
         (<! (e/next-frame))
         (recur (inc fnum))))))
 
+(defn health-display-thread []
+  (go-while (state/playing?)
+    (m/with-sprite :damage
+      [health-text (pf/make-text :small (->> @state/state :health int (str "damage "))
+                                 :scale 3
+                                 :x -110 :y -20)]
+      (loop [health (:health @state/state)]
+        (<! (e/next-frame))
+        (let [new-health (:health @state/state)]
+          (when (not= new-health health)
+            (.removeChildren health-text)
+            (pf/change-text! health-text :small (str "damage: " (int new-health))))
+          (recur new-health)))))
+  )
+
 (defn dead? []
   (or (e/is-pressed? :esc)
   false))
@@ -208,6 +223,10 @@ void main()
   (go-while
    (not (dead?))
    (state/set-amp! 100)
+   (state/start-game!)
+
+   (health-display-thread)
+   
    (loop [fnum 0
           pos (vec2/vec2 0 0)
           vel (vec2/vec2 0 0)
@@ -260,7 +279,8 @@ void main()
          ;; die
          (do
            (explosion/explosion player)
-           (<! (e/wait-frames 300)))
+           (<! (e/wait-frames 300))
+           (state/die!))
 
          ;; still living
          (recur (inc fnum)
@@ -295,21 +315,6 @@ void main()
 
         (<! (e/next-frame))
         (recur (inc fnum))))))
-
-(defn health-display-thread []
-  (go-while (state/playing?)
-    (m/with-sprite :damage
-      [health-text (pf/make-text :small (->> @state/state :health int (str "damage "))
-                                 :scale 3
-                                 :x -110 :y -20)]
-      (loop [health (:health @state/state)]
-        (<! (e/next-frame))
-        (let [new-health (:health @state/state)]
-          (when (not= new-health health)
-            (.removeChildren health-text)
-            (pf/change-text! health-text :small (str "damage: " (int new-health))))
-          (recur new-health)))))
-  )
 
 (defonce main
   (go                              ;-until-reload
