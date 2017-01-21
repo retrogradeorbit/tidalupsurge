@@ -14,6 +14,7 @@
             [ggj17.assets :as assets]
             [ggj17.explosion :as explosion]
             [ggj17.state :as state]
+            [ggj17.level :as level]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -101,10 +102,11 @@ void main()
 (defonce bg-colour 0x52c0e5)
 
 (defonce canvas
-  (c/init {:layers [:bg :ocean :player :ui :damage]
+  (c/init {:layers [:bg :ocean :player :damage :score :ui]
            :background bg-colour
            :expand true
-           :origins {:damage :bottom-right}}))
+           :origins {:damage :bottom-right
+                     :score :bottom-left}}))
 
 (def scale 3)
 
@@ -203,7 +205,7 @@ void main()
 (defn health-display-thread []
   (go-while (state/playing?)
     (m/with-sprite :damage
-      [health-text (pf/make-text :small (->> @state/state :health int (str "damage "))
+      [health-text (pf/make-text :small (->> @state/state :health int (str "hull "))
                                  :scale 3
                                  :x -110 :y -20)]
       (loop [health (:health @state/state)]
@@ -211,8 +213,23 @@ void main()
         (let [new-health (:health @state/state)]
           (when (not= new-health health)
             (.removeChildren health-text)
-            (pf/change-text! health-text :small (str "damage: " (int new-health))))
+            (pf/change-text! health-text :small (str "hull " (int new-health))))
           (recur new-health)))))
+  )
+
+(defn score-display-thread []
+  (go-while (state/playing?)
+    (m/with-sprite :score
+      [score-text (pf/make-text :small (->> @state/state :score int str)
+                                 :scale 5
+                                 :x 30 :y -30)]
+      (loop [score (:score @state/state)]
+        (<! (e/next-frame))
+        (let [new-score (:score @state/state)]
+          (when (not= new-score score)
+            (.removeChildren score-text)
+            (pf/change-text! score-text :small (str (int new-score))))
+          (recur new-score)))))
   )
 
 (defn dead? []
@@ -222,11 +239,13 @@ void main()
 (defn player-thread [player]
   (go-while
    (not (dead?))
-   (state/set-amp! 100)
+   (state/set-amp! 1)
    (state/start-game!)
 
    (health-display-thread)
-
+   (score-display-thread)
+   (level/level-thread)
+   
    (loop [fnum 0
           pos (vec2/vec2 0 0)
           vel (vec2/vec2 0 0)
