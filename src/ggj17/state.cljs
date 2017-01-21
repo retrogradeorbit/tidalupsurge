@@ -9,9 +9,19 @@
      :phase 0
      :fnum 0}
 
-    :pos (vec2/vec2 0 0)})
+    :pos (vec2/vec2 0 0)
+
+    :health 100
+    })
   )
 
 (defn set-amp! [amp]
   (swap! state assoc-in [:wave :amp] amp)
   )
+
+(defn set-health [state health]
+  (assoc state :health health)
+  )
+
+(defn playing? []
+  true)

@@ -4,6 +4,7 @@
             [infinitelives.pixi.texture :as t]
             [infinitelives.pixi.tilemap :as tm]
             [infinitelives.pixi.sprite :as s]
+            [infinitelives.pixi.pixelfont :as pf]
             [infinitelives.utils.events :as e]
             [infinitelives.utils.vec2 :as vec2]
             [infinitelives.utils.gamepad :as gp]
@@ -16,8 +17,8 @@
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
                    [ggj17.async :refer [go-while go-until-reload]]
+                   [infinitelives.pixi.pixelfont :as pf]
                    ))
-
 
 (enable-console-print!)
 
@@ -95,9 +96,10 @@ void main()
 (defonce bg-colour 0x52c0e5)
 
 (defonce canvas
-  (c/init {:layers [:bg :ocean :player :ui]
+  (c/init {:layers [:bg :ocean :player :ui :damage]
            :background bg-colour
-           :expand true}))
+           :expand true
+           :origins {:damage :bottom-right}}))
 
 (def scale 3)
 
@@ -200,7 +202,6 @@ void main()
         (<! (e/next-frame))
         (recur (inc fnum))))))
 
-
 (defn dead? []
   (or (e/is-pressed? :esc)
   false))
@@ -260,15 +261,38 @@ void main()
                heading-delta))
       )))
 
+(defn health-display-thread []
+  (go-while (state/playing?)
+    (m/with-sprite :damage
+      [health-text (pf/make-text :small (->> @state/state :health (str "damage "))
+                                 :scale 3
+                                 :x -110 :y -20)]
+      (loop [health (:health @state/state)]
+        (<! (e/next-frame))
+        (let [new-health (:health @state/state)]
+          (when (not= new-health health)
+            (.removeChildren health-text)
+            (pf/change-text! health-text :small (str "damage: " new-health)))
+          (recur new-health)))))
+  )
+
 (defonce main
   (go                              ;-until-reload
                                         ;state
                                         ; load resource url with tile sheet
-    (<! (r/load-resources canvas :ui ["img/spritesheet.png"]))
+    (<! (r/load-resources canvas :ui ["img/spritesheet.png"
+                                      "img/fonts.png"]))
 
     (t/load-sprite-sheet!
      (r/get-texture :spritesheet :nearest)
      assets/sprites)
+
+    (pf/pixel-font :small "img/fonts.png" [11 117] [235 169]
+                   :chars ["ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                           "abcdefghijklmnopqrstuvwxyz"
+                           "0123456789!?#`'.,"]
+                   :kerning {"fo" -2  "ro" -1 "la" -1 }
+                   :space 5)
 
     (m/with-sprite :player
       [
@@ -282,18 +306,15 @@ void main()
          clouds-back (make-clouds (.-innerWidth js/window) 0.8)]
 
          (let [shader (wave-line [1 1])]
-          (set-texture-filter bg shader)
 
-          (wave-update-thread shader clouds-front clouds-back)
+        (set-texture-filter bg shader)
+
+        (wave-update-thread shader clouds-front clouds-back)
+        (health-display-thread)
 
           (while true
             (<! (titlescreen-thread title-text))
             (<! (player-thread player)))
-
-       ))
-
-      )
-
-    ))
+    )))))
 
 
