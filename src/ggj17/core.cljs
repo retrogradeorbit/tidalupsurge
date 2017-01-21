@@ -35,7 +35,7 @@ varying vec4 vColor;
 uniform float amp;
 uniform float freq;
 uniform float phase;
-    
+
 vec3 hsv2rgb (vec3 c)
     {
       vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
@@ -116,6 +116,14 @@ void main()
 (defn set-texture-filter [texture filter]
   (set! (.-filters texture) (make-array filter)))
 
+(defn make-clouds [num-clouds]
+  (vec
+    (for [cloud-num (range num-clouds)]
+      (s/make-sprite :cloud
+                     :scale scale
+                     :x (- (* cloud-num 200) 1000) :y -300)
+   )))
+
 (defonce main
   (go                              ;-until-reload
                                         ;state
@@ -132,39 +140,41 @@ void main()
        player (s/make-sprite :boat
                              :scale scale
                              :x 0 :y 0)]
+       (m/with-sprite-set :player
+        [clouds (make-clouds 10)]
 
-      (let [shader (wave-line [1 1])
-            ]
-        (set-texture-filter bg shader)
-        (loop [fnum 0]
-          (let [amp (* 30 (Math/sin (/ fnum 20)))
-                height (.-innerHeight js/window)
-                width (.-innerWidth js/window)
-                phase (* fnum 0.03)
-                freq 10
-                ]
-            (set-shader-uniforms shader fnum)
+        (let [shader (wave-line [1 1])
+              ]
+          (set-texture-filter bg shader)
+          (loop [fnum 0]
+            (let [amp (* 30 (Math/sin (/ fnum 20)))
+                  height (.-innerHeight js/window)
+                  width (.-innerWidth js/window)
+                  phase (* fnum 0.03)
+                  freq 10
+                  ]
+              (set-shader-uniforms shader fnum)
 
-            (s/set-pos! player 0
-                        (- (* height (*
-                                      (/ amp height)
-                                      (Math/sin (+ (/ (* 640 freq 0.5) width) phase)))) 20)
+              (s/set-pos! player 0
+                          (- (* height (*
+                                        (/ amp height)
+                                        (Math/sin (+ (/ (* 640 freq 0.5) width) phase)))) 20)
 
-                        )
+                          )
 
-            (s/set-rotation!
-             player
-             (Math/atan
-              (*
-                  0.2
-                  (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
-              )
-             )
-            
-           
-            (<! (e/next-frame))
-            (recur (inc fnum)))
-          ))
+              (s/set-rotation!
+               player
+               (Math/atan
+                (*
+                    0.2
+                    (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
+                )
+               )
+
+
+              (<! (e/next-frame))
+              (recur (inc fnum)))
+            )))
 
       )
 
