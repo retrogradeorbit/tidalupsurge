@@ -26,10 +26,19 @@
   (swap! state set-health health))
 
 (defn playing? []
-  true)
+  (:playing? @state))
 
 (defn sub-damage [state damage]
   (update state :health - damage))
 
 (defn sub-damage! [damage]
   (swap! state sub-damage damage))
+
+(defn start-game! []
+  (swap! state assoc
+         :health 100
+         :pos (vec2/vec2 0 0)
+         :playing? true))
+
+(defn die! []
+  (swap! state assoc :playing? false))
