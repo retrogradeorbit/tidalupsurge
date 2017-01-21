@@ -11,7 +11,7 @@
 
     :pos (vec2/vec2 0 0)
 
-    :health 100
+    :health 100.0
     })
   )
 
@@ -27,3 +27,9 @@
 
 (defn playing? []
   true)
+
+(defn sub-damage [state damage]
+  (update state :health - damage))
+
+(defn sub-damage! [damage]
+  (swap! state sub-damage damage))
