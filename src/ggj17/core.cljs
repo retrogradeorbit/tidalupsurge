@@ -226,7 +226,7 @@ void main()
    (state/start-game!)
 
    (health-display-thread)
-   
+
    (loop [fnum 0
           pos (vec2/vec2 0 0)
           vel (vec2/vec2 0 0)
@@ -310,12 +310,12 @@ void main()
        ))
 
 (defn instructions-thread []
-  (go
+  (go-while (not (state/playing?))
     (m/with-sprite :ui
-      [start-text (pf/make-text :small "Press space to start"
+      [start-text (pf/make-text :small "Press any button to start"
                                  :scale 3
                                  :x 0 :y 150)]
-      (while true
+      (while (not (state/playing?))
         (<! (slide-text start-text))))))
 
 (defn titlescreen-thread [tidal upsurge]
