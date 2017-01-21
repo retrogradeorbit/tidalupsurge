@@ -21,8 +21,9 @@
 (enable-console-print!)
 
 
-(def amp 150)
-(def gravity (vec2/vec2 0 0.01))
+(def amp 100)
+(def freq 0.005)
+(def gravity (vec2/vec2 0 0.1))
 
 
 ;; define your app data so that it doesn't get over-written on reload
@@ -200,8 +201,7 @@ void main()
                pos (vec2/vec2 0 0)
                vel (vec2/vec2 0 0)]
           (let [
-                phase (/ fnum 15)
-                freq 0.01
+                phase (/ fnum 15)                
 
                 height (.-innerHeight js/window)
                 width (.-innerWidth js/window)
@@ -210,25 +210,16 @@ void main()
                 half-width (/ (.-innerHeight js/window) 2)
 
                 vel (vec2/add vel gravity)
-                pos (vec2/add pos vel)
+                pos2 (vec2/add pos vel)
                 
-                constrained-pos (constrain-pos pos width height amp freq phase)
+                constrained-pos (constrain-pos pos2 width height amp freq phase)
+
+                ;; now calculate the vel we pass through to next iter from our changed position
+                vel (vec2/sub constrained-pos pos)
                 ]
             (set-shader-uniforms shader fnum amp freq phase)
 
-            (s/set-pos! player constrained-pos
-
-                        #_
-                        (vec2/get-x pos)
-
-                        #_
-                        (wave-y-position
-                         width height
-                         amp freq phase
-                         (vec2/get-x pos))
-
-
-                        )
+            (s/set-pos! player constrained-pos)
 
             (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
             (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
