@@ -25,6 +25,7 @@
 (def freq 0.005)
 (def gravity (vec2/vec2 0 0.1))
 
+(def state (atom {:playing false}))
 
 ;; define your app data so that it doesn't get over-written on reload
 
@@ -164,27 +165,45 @@ void main()
         (s/set-pos! cloud x-pos y-pos )))
     clouds)))
 
+(defn playing? []
+  (js/console.log (:playing @state))
+  (:playing @state))
 
-(defn start? []
+(defn start-pressed? []
   (e/is-pressed? :space))
 
-(defn titlescreen []
-  (go-while (not (start?))
+(defn titlescreen [frame]
+  (go-while (start-pressed?)
     (m/with-sprite canvas :player
       [title-text (s/make-sprite  :title-text :scale scale :x 0 :y 0)]
-      (loop [frame 0]
-        (s/set-y! title-text frame)
-        (<! (e/next-frame))
-        (recur (inc frame))))))
+        (s/set-y! title-text frame))))
 
 
 (defn constrain-pos [pos width height amp freq phase]
   (let [[x y] (vec2/as-vector pos)
         wave-y (wave-y-position width height amp freq phase x)]
     (vec2/vec2 x (if (<= y wave-y) y wave-y))
-
-
     )
+  )
+
+(defn float-boat [player width freq phase constrained-pos]
+  (s/set-pos! player constrained-pos)
+
+  (s/set-rotation!
+   player
+   (Math/atan
+    (*
+        0.2
+        (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
+    )
+   ))
+
+(defn update-background [shader clouds-front clouds-back fnum amp freq phase fnum width height]
+  (set-shader-uniforms shader fnum amp freq phase)
+
+
+  (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
+  (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
   )
 
 (defonce main
@@ -213,13 +232,12 @@ void main()
             ]
         (set-texture-filter bg shader)
 
-        (<! (titlescreen))
 
         (loop [fnum 0
                pos (vec2/vec2 0 0)
                vel (vec2/vec2 0 0)]
           (let [
-                phase (/ fnum 15)                
+                phase (/ fnum 15)
 
                 height (.-innerHeight js/window)
                 width (.-innerWidth js/window)
@@ -229,27 +247,19 @@ void main()
 
                 vel (vec2/add vel gravity)
                 pos2 (vec2/add pos vel)
-                
+
                 constrained-pos (constrain-pos pos2 width height amp freq phase)
 
                 ;; now calculate the vel we pass through to next iter from our changed position
                 vel (vec2/sub constrained-pos pos)
                 ]
-            (set-shader-uniforms shader fnum amp freq phase)
 
-            (s/set-pos! player constrained-pos)
+            (update-background shader clouds-front clouds-back fnum amp freq phase fnum width height)
 
-            (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
-            (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
 
-            (s/set-rotation!
-             player
-             (Math/atan
-              (*
-                  0.2
-                  (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
-              )
-             )
+            (if (playing?)
+              (float-boat player width freq phase constrain-pos)
+              (titlescreen fnum))
 
 
             (<! (e/next-frame))
