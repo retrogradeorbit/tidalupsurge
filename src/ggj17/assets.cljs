@@ -7,6 +7,8 @@
    :upsurge {:pos [100 32] :size [156 32]}
    :cloud {:pos [48 0] :size [48 32]}
 
+   :guy {:pos [48 64] :size [32 32]}
+
    :explode-1 {:pos [0 64] :size [48 32]}
    :explode-2 {:pos [0 96] :size [48 32]}
    :explode-3 {:pos [0 128] :size [48 32]}

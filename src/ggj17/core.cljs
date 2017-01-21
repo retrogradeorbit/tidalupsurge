@@ -18,6 +18,7 @@
             [ggj17.level :as level]
             [ggj17.clouds :as clouds]
             [ggj17.popup :as popup]
+            [ggj17.floaty :as floaty]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
