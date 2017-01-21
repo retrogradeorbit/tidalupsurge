@@ -35,6 +35,8 @@ varying vec4 vColor;
 uniform float amp;
 uniform float freq;
 uniform float phase;
+uniform float width;
+uniform float height;
 
 vec3 hsv2rgb (vec3 c)
     {
@@ -45,10 +47,10 @@ vec3 hsv2rgb (vec3 c)
 
 void main()
 {
-  if (vTextureCoord.y < (0.5 +  amp * sin(freq * vTextureCoord.x + phase)))
+  if (vTextureCoord.y < (0.5 + (amp / height) * sin(((640.0 * freq / width) * vTextureCoord.x + phase))))
   {
     gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
-    }
+  }
   else
   {
     // More green, less blue as we get to the bottom
@@ -109,8 +111,8 @@ void main()
   (set! (.-uniforms.amp.value shader) (* 30 (Math/sin (/ fnum 20))))
   (set! (.-uniforms.freq.value shader) 10.0)
   (set! (.-uniforms.phase.value shader) (* fnum 0.03))
-  (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
-  (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
+  ;(set! (.-uniforms.width.value shader) (.-innerWidth js/window))
+  ;(set! (.-uniforms.height.value shader) (.-innerHeight js/window))
   )
 
 (defn set-texture-filter [texture filter]
@@ -162,7 +164,7 @@ void main()
 
                           )
 
-              (s/set-rotation!
+              #_ (s/set-rotation!
                player
                (Math/atan
                 (*
@@ -179,5 +181,3 @@ void main()
       )
 
     ))
-
-
