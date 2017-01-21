@@ -254,11 +254,15 @@ void main()
        (s/set-pos! player constrained-pos)
        (s/set-rotation! player heading)
 
-
        (<! (e/next-frame))
 
        (if (<= (:health @state/state) 0)
-         (explosion/explosion player)
+         ;; die
+         (do
+           (explosion/explosion player)
+           (<! (e/wait-frames 300)))
+
+         ;; still living
          (recur (inc fnum)
                 (vec2/add constrained-pos joy)
                 vel
