@@ -292,7 +292,7 @@ void main()
    ))
 
 (defn slide-text [text]
-    (go
+    (go-while (not (state/playing?))
       (loop [fnum 0]
         (let [width (.-innerWidth js/window)
               height (.-innerHeight js/window)
