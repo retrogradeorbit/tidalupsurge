@@ -167,7 +167,12 @@ void main()
     clouds)))
 
 (defn start-pressed? []
-  (e/is-pressed? :space))
+  (or
+   (e/is-pressed? :space)
+   (gp/button-pressed? 0 :a)
+   (gp/button-pressed? 0 :b)
+   (gp/button-pressed? 0 :x)
+   (gp/button-pressed? 0 :y)))
 
 
 (defn on-wave? [pos width height amp freq phase]
@@ -234,7 +239,17 @@ void main()
 
 (defn dead? []
   (or (e/is-pressed? :esc)
-  false))
+      false))
+
+(defn jump-pressed? []
+  (or
+   (e/is-pressed? :space)
+   (gp/button-pressed? 0 :a)
+   (gp/button-pressed? 0 :b)
+   (gp/button-pressed? 0 :x)
+   (gp/button-pressed? 0 :y)))
+
+(def jump-vec (vec2/vec2 0 -5))
 
 (defn player-thread [player]
   (go-while
@@ -266,9 +281,11 @@ void main()
 
            vel (vec2/add vel gravity)
            pos2 (vec2/add pos vel)
-
+           
            player-on-wave? (on-wave? pos2 width height amp freq phase)
 
+           pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?)) jump-vec (vec2/zero)))
+           
            constrained-pos (constrain-pos pos2 width height amp freq phase)
 
            ;; now calculate the vel we pass through to next iter from our changed position
