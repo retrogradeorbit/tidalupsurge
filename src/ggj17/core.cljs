@@ -300,7 +300,7 @@ void main()
        title-text (s/make-sprite  :title-text :scale scale :x 10 :y 0)
        player (s/make-sprite :boat
                              :scale scale
-                             :x 10000 :y 0)]
+                             :x 0 :y 0)]
        (m/with-sprite-set :player
         [clouds-front (make-clouds (.-innerWidth js/window) 1.0)
          clouds-back (make-clouds (.-innerWidth js/window) 0.8)]
@@ -313,7 +313,12 @@ void main()
         (health-display-thread)
 
           (while true
+            (s/set-visible! player false)
+            (s/set-visible! title-text true)
             (<! (titlescreen-thread title-text))
+
+            (s/set-visible! title-text false)
+            (s/set-visible! player true)
             (<! (player-thread player)))
     )))))
 
