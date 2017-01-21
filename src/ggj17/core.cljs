@@ -160,11 +160,12 @@ void main()
 (defn start-pressed? []
   (e/is-pressed? :space))
 
-(defn titlescreen [frame]
-  (go-while (start-pressed?)
-    (m/with-sprite canvas :player
-      [title-text (s/make-sprite  :title-text :scale scale :x 0 :y 0)]
-        (s/set-y! title-text frame))))
+(defn titlescreen-thread [title-text]
+  (go-while (not (start-pressed?))
+    (loop [fnum 0]
+        (s/set-y! title-text fnum)
+        (<! (e/next-frame))
+        (recur (inc fnum)))))
 
 (defn on-wave? [pos width height amp freq phase]
   (let [[x y] (vec2/as-vector pos)
@@ -199,6 +200,66 @@ void main()
         (<! (e/next-frame))
         (recur (inc fnum))))))
 
+
+(defn dead? []
+  (or (e/is-pressed? :esc)
+  false))
+
+(defn player-thread [player]
+  (go-while (not (dead?))
+    (loop [fnum 0
+           pos (vec2/vec2 0 0)
+           vel (vec2/vec2 0 0)
+           heading 0
+           heading-delta 0
+           ]
+      (let [
+            {:keys [amp freq phase]} (:wave @state/state)
+
+            height (.-innerHeight js/window)
+            width (.-innerWidth js/window)
+
+            joy (get-player-input-vec2)
+            joy-x (vec2/get-x joy)
+            joy-y (vec2/get-y joy)
+            half-width (/ (.-innerHeight js/window) 2)
+
+            vel (vec2/add vel gravity)
+            pos2 (vec2/add pos vel)
+
+            player-on-wave? (on-wave? pos2 width height amp freq phase)
+
+            constrained-pos (constrain-pos pos2 width height amp freq phase)
+
+            ;; now calculate the vel we pass through to next iter from our changed position
+            vel (vec2/sub constrained-pos pos)
+
+            heading (if player-on-wave?
+                      (Math/atan (* 0.2 (Math/cos (+ (/ (* 640 freq 0.25) width) phase))))
+                      (+ heading heading-delta))
+
+            heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
+
+            ;; damped heading delta back to 0
+            heading-delta (if (neg? heading-delta)
+                            (min 0 (+ heading-delta 0.001))
+                            (max 0 (- heading-delta 0.001)))
+            ]
+
+        ;(titlescreen fnum)
+
+        (s/set-pos! player constrained-pos)
+        (s/set-rotation! player heading)
+
+
+        (<! (e/next-frame))
+        (recur (inc fnum)
+               (vec2/add constrained-pos joy)
+               vel
+               heading
+               heading-delta))
+      )))
+
 (defonce main
   (go                              ;-until-reload
                                         ;state
@@ -209,76 +270,27 @@ void main()
      (r/get-texture :spritesheet :nearest)
      assets/sprites)
 
-
-
     (m/with-sprite :player
       [
        bg (s/make-sprite (make-background) :scale 100)
+       title-text (s/make-sprite  :title-text :scale scale :x 10 :y 0)
        player (s/make-sprite :boat
                              :scale scale
-                             :x 0 :y 0)]
+                             :x 10000 :y 0)]
        (m/with-sprite-set :player
         [clouds-front (make-clouds (.-innerWidth js/window) 1.0)
          clouds-back (make-clouds (.-innerWidth js/window) 0.8)]
 
-         (let [shader (wave-line [1 1])
-            ]
-        (set-texture-filter bg shader)
+         (let [shader (wave-line [1 1])]
+          (set-texture-filter bg shader)
 
-        (wave-update-thread shader clouds-front clouds-back)
-    
-        (loop [fnum 0
-               pos (vec2/vec2 0 0)
-               vel (vec2/vec2 0 0)
-               heading 0
-               heading-delta 0
-               ]
-          (let [
-                {:keys [amp freq phase]} (:wave @state/state)
+          (wave-update-thread shader clouds-front clouds-back)
 
-                height (.-innerHeight js/window)
-                width (.-innerWidth js/window)
+          (while true
+            (<! (titlescreen-thread title-text))
+            (<! (player-thread player)))
 
-                joy (get-player-input-vec2)
-                joy-x (vec2/get-x joy)
-                joy-y (vec2/get-y joy)
-                half-width (/ (.-innerHeight js/window) 2)
-
-                vel (vec2/add vel gravity)
-                pos2 (vec2/add pos vel)
-
-                player-on-wave? (on-wave? pos2 width height amp freq phase)
-
-                constrained-pos (constrain-pos pos2 width height amp freq phase)
-
-                ;; now calculate the vel we pass through to next iter from our changed position
-                vel (vec2/sub constrained-pos pos)
-
-                heading (if player-on-wave?
-                          (Math/atan (* 0.2 (Math/cos (+ (/ (* 640 freq 0.25) width) phase))))
-                          (+ heading heading-delta))
-
-                heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
-
-                ;; damped heading delta back to 0
-                heading-delta (if (neg? heading-delta)
-                                (min 0 (+ heading-delta 0.001))
-                                (max 0 (- heading-delta 0.001)))
-                ]            
-
-            ;(titlescreen fnum)
-
-			(s/set-pos! player constrained-pos)
-            (s/set-rotation! player heading)
-
-
-            (<! (e/next-frame))
-            (recur (inc fnum)
-                   (vec2/add constrained-pos joy)
-                   vel
-                   heading
-                   heading-delta))
-          )))
+       ))
 
       )
 
