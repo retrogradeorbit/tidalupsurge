@@ -217,6 +217,7 @@ void main()
            vel (vec2/vec2 0 0)
            heading 0
            heading-delta 0
+           last-frame-on-wave? false
            ]
       (let [
             {:keys [amp freq phase]} (:wave @state/state)
@@ -233,7 +234,7 @@ void main()
             pos2 (vec2/add pos vel)
 
             player-on-wave? (on-wave? pos2 width height amp freq phase)
-
+            
             constrained-pos (constrain-pos pos2 width height amp freq phase)
 
             ;; now calculate the vel we pass through to next iter from our changed position
@@ -251,6 +252,9 @@ void main()
                             (max 0 (- heading-delta 0.001)))
             ]
 
+        (when (and player-on-wave? (not last-frame-on-wave?))
+          (js/console.log "LANDS"))
+        
         ;(titlescreen fnum)
 
         (s/set-pos! player constrained-pos)
@@ -262,7 +266,8 @@ void main()
                (vec2/add constrained-pos joy)
                vel
                heading
-               heading-delta))
+               heading-delta
+               player-on-wave?))
       )))
 
 (defn health-display-thread []
