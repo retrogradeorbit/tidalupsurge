@@ -10,7 +10,8 @@
             [infinitelives.utils.gamepad :as gp]
             [infinitelives.utils.pathfind :as path]
             [infinitelives.utils.console :refer [log]]
-
+            [infinitelives.utils.sound :as sound]
+            
             [ggj17.assets :as assets]
             [ggj17.explosion :as explosion]
             [ggj17.state :as state]
@@ -65,6 +66,48 @@ void main()
 }
 "
   )
+
+(def flip-text
+  {
+   -3 ["sick triple backflip!"]
+   -2 ["double backflip"]
+   -1 ["backward flip!"
+       "reverse roll"
+       "do a barrel roll"
+       "backflip"]
+   0 ["jump landed"
+      "splash down"]
+   1 ["sick flip bro!"
+      "a full flip"
+      "forward roll"]
+   2 ["double flip!"
+      "720!"
+      "double forward roll"]
+   3 ["triple flippage"
+      "three full loops"
+      "you're a loop master"]
+   })
+
+(def flip-score
+  {
+   -3 500
+   -2 200
+   -1 50
+   0 5
+   1 50
+   2 200
+   3 500
+   })
+
+(def flip-sfx
+  {
+   -3 :land1
+   -2 :land1
+   -1 :land1
+   1 :land1
+   2 :land1
+   3 :land1
+   })
 
 (defn wave-y-position [width height amp freq phase x]
 
@@ -244,6 +287,8 @@ void main()
    (health-display-thread)
    (score-display-thread)
    (level/level-thread)
+
+   (sound/play-sound :game-start 0.5 false)
    
    (loop [fnum 0
           pos (vec2/vec2 0 0)
@@ -292,11 +337,28 @@ void main()
 
        ;; landing
        (when (and (not last-frame-on-wave?) player-on-wave?)
-         (let [flips (int (/ total-delta (* 2 Math/PI)))]
-           (popup/popup! (vec2/add pos2 (vec2/vec2 0 -30)) (str flips) 200))
-         (let [heading-diff (Math/abs (- heading old-heading))]
+         (let [flips (int (/ total-delta (* 2 Math/PI)))
+               heading-diff (Math/abs (- heading old-heading))]
            (when (> heading-diff 0.5)
-             (state/sub-damage! (* heading-diff 10)))))
+             (state/sub-damage! (* heading-diff 3)))
+             
+           ;; if landed and alive, popup
+           (when (pos? (:health @state/state))
+             
+             (popup/popup! (vec2/add pos2 (vec2/vec2 0 -30))
+                           (rand-nth (flip-text flips))
+                           200)
+
+             (sound/play-sound :splash1 0.3 false)
+             
+             (when-let [sfx (flip-sfx flips)]
+               (sound/play-sound sfx 0.5 false))
+             
+             (state/add-score! (flip-score flips))
+             )
+           
+           
+             ))
        
        (s/set-pos! player constrained-pos)
        (s/set-rotation! player heading)
@@ -307,7 +369,12 @@ void main()
          ;; die
          (do
            (explosion/explosion player)
-           (<! (e/wait-frames 300))
+           (sound/play-sound :boom1 0.5 false)
+           (<! (e/wait-frames 100))
+           (m/with-sprite :ui
+             [gameover (pf/make-text :small "Game Over" :scale 7)]
+             (sound/play-sound :gameover 0.5 false)
+             (<! (e/wait-frames 300)))
            (state/die!))
 
          ;; still living
@@ -325,33 +392,40 @@ void main()
    ))
 
 (defn slide-text [text-string]
-    (go-while (not (state/playing?))
-       (m/with-sprite :ui
-        [text (pf/make-text :small text-string
-                                  :scale 3
-                                  :x 0 :y 150)]
+  (go-while
+   (not (state/playing?))
+   (m/with-sprite :ui
+     [text (pf/make-text :small text-string
+                         :scale 3
+                         :x 0 :y 150)]
 
-        ; Slide in
-        (loop [fnum 0]
-          (let [width (.-innerWidth js/window)
-                height (.-innerHeight js/window)
-                x-pos  (Math/pow 1.05 (- 150 fnum))]
-            (s/set-x! text x-pos)
-            (<! (e/next-frame))
-            (when (> x-pos 1)
-              (recur (inc fnum)))))
+     ;; Slide in
+     (loop [fnum 0]
+       (let [width (.-innerWidth js/window)
+             height (.-innerHeight js/window)
+             x-pos  (Math/pow 1.05 (- 150 fnum))]
+         (s/set-x! text x-pos)
 
-        (<! (e/wait-frames 30))
+         (when (= 20 fnum) (sound/play-sound :text-arrive 0.5 false))
 
-        ; Slide out
-        (loop [fnum 0]
-          (let [width (.-innerWidth js/window)
-                height (.-innerHeight js/window)
-                x-pos  (- 0  (Math/pow 1.1 fnum))]
-            (s/set-x! text x-pos)
-            (<! (e/next-frame))
-            (when (> x-pos -1000)
-              (recur (inc fnum))))))))
+         (<! (e/next-frame))
+         (when (> x-pos 1)
+           (recur (inc fnum)))))
+
+     (<! (e/wait-frames 30))
+
+     ;; Slide out
+     (loop [fnum 0]
+       (let [width (.-innerWidth js/window)
+             height (.-innerHeight js/window)
+             x-pos  (- 0  (Math/pow 1.1 fnum))]
+         (s/set-x! text x-pos)
+
+         (when (= fnum 20) (sound/play-sound :text-depart 0.5 false))
+         
+         (<! (e/next-frame))
+         (when (> x-pos -1000)
+           (recur (inc fnum))))))))
 
 (defn instructions-thread []
   (go-while (not (state/playing?))
@@ -391,7 +465,18 @@ void main()
                                         ;state
                                         ; load resource url with tile sheet
     (<! (r/load-resources canvas :ui ["img/spritesheet.png"
-                                      "img/fonts.png"]))
+                                      "img/fonts.png"
+                                      "sfx/jump1.ogg"
+                                      "sfx/splash1.ogg"
+                                      "sfx/splash-smooth.ogg"
+                                      "sfx/boom1.ogg"
+                                      "sfx/title-slide.ogg"
+                                      "sfx/text-arrive.ogg"
+                                      "sfx/text-depart.ogg"
+                                      "sfx/game-start.ogg"
+                                      "sfx/gameover.ogg"
+                                      "sfx/land1.ogg"
+                                      ]))
 
     (t/load-sprite-sheet!
      (r/get-texture :spritesheet :nearest)
