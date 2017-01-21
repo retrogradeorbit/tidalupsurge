@@ -118,13 +118,13 @@ void main()
 (defn set-texture-filter [texture filter]
   (set! (.-filters texture) (make-array filter)))
 
-;(defn make-clouds [num-clouds]
-  ;(vec
-    ;(for [cloud-num (range num-clouds)]
-      ;(s/make-sprite :cloud
-                     ;:scale scale
-                     ;:x (- (* cloud-num 200) 1000) :y -300)
-   ;)))
+(defn make-clouds [num-clouds]
+  (vec
+    (for [cloud-num (range num-clouds)]
+      (s/make-sprite :cloud
+                     :scale scale
+                     :x (- (* cloud-num 200) 1000) :y -300)
+   )))
 
 (defonce main
   (go                              ;-until-reload
@@ -142,8 +142,8 @@ void main()
        player (s/make-sprite :boat
                              :scale scale
                              :x 0 :y 0)]
-      ;(m/with-sprite-set :player
-        ;[clouds (make-clouds 10)]
+      (m/with-sprite-set :player
+        [clouds (make-clouds 10)]
 
         (let [shader (wave-line [1 1])
               ]
@@ -176,7 +176,7 @@ void main()
 
               (<! (e/next-frame))
               (recur (inc fnum)))
-            ));)
+            )))
 
       )
 
