@@ -14,6 +14,7 @@
             [ggj17.assets :as assets]
             [ggj17.explosion :as explosion]
             [ggj17.state :as state]
+            [ggj17.level :as level]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -238,12 +239,13 @@ void main()
 (defn player-thread [player]
   (go-while
    (not (dead?))
-   (state/set-amp! 100)
+   (state/set-amp! 1)
    (state/start-game!)
 
    (health-display-thread)
    (score-display-thread)
-
+   (level/level-thread)
+   
    (loop [fnum 0
           pos (vec2/vec2 0 0)
           vel (vec2/vec2 0 0)

@@ -17,8 +17,7 @@
   )
 
 (defn set-amp! [amp]
-  (swap! state assoc-in [:wave :amp] amp)
-  )
+  (swap! state assoc-in [:wave :amp] amp))
 
 (defn set-health [state health]
   (assoc state :health health))
