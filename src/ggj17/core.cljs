@@ -15,6 +15,7 @@
             [ggj17.explosion :as explosion]
             [ggj17.state :as state]
             [ggj17.level :as level]
+            [ggj17.clouds :as clouds]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -102,7 +103,7 @@ void main()
 (defonce bg-colour 0x52c0e5)
 
 (defonce canvas
-  (c/init {:layers [:bg :ocean :player :damage :score :ui]
+  (c/init {:layers [:bg :ocean :player :clouds :damage :score :ui]
            :background bg-colour
            :expand true
            :origins {:damage :bottom-right
@@ -149,23 +150,6 @@ void main()
                        (e/is-pressed? :down) 1
                        :default 0))))
 
-(defn make-clouds [width scale-factor]
-  (vec
-    (let [num-clouds (/ width 200)]
-      (for [cloud-num (range num-clouds)]
-        (s/make-sprite :cloud
-                       :scale (* scale scale-factor)
-                       :x 0 :y 200)))))
-
-(defn shift-clouds [clouds frame width y-pos time-scale]
-  (vec (map-indexed
-    (fn [idx cloud]
-      (let [shift (* 250 idx)
-            width (+ width (* 2 scale 48))
-            x-pos (- (mod (+ shift (* frame time-scale)) width) (/ width 2))]
-        (s/set-pos! cloud x-pos y-pos )))
-    clouds)))
-
 (defn start-pressed? []
   (or
    (e/is-pressed? :space)
@@ -185,18 +169,17 @@ void main()
         wave-y (wave-y-position width height amp freq phase x)]
     (vec2/vec2 x (if (on-wave? pos width height amp freq phase) wave-y y))))
 
-(defn update-background [shader clouds-front clouds-back fnum amp freq phase width height]
+(defn update-background [shader fnum amp freq phase width height]
   (set-shader-uniforms shader fnum amp freq phase)
 
-  (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
-  (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
+  
   )
 
-(defn wave-update-thread [shader clouds-front clouds-back]
+(defn wave-update-thread [shader]
   (go
     (loop [fnum 0]
       (let [{:keys [amp freq phase]} (:wave @state/state)]
-        (update-background shader clouds-front clouds-back fnum amp freq phase
+        (update-background shader fnum amp freq phase
                            (.-innerWidth js/window)
                            (.-innerHeight js/window))
         (swap! state/state
@@ -415,15 +398,16 @@ void main()
        player (s/make-sprite :boat
                              :scale scale
                              :x 0 :y 0)]
-      (m/with-sprite-set :player
-        [clouds-front (make-clouds (.-innerWidth js/window) 1.0)
-         clouds-back (make-clouds (.-innerWidth js/window) 0.8)]
-
+      (m/with-sprite-set :clouds
+        [cloudset (clouds/get-sprites)]
+        (clouds/cloud-thread cloudset)
+        (js/console.log "cloudset" (str cloudset))
+        
         (let [shader (wave-line [1 1])]
 
           (set-texture-filter bg shader)
 
-          (wave-update-thread shader clouds-front clouds-back)
+          (wave-update-thread shader)
           (health-display-thread)
 
           (while true
