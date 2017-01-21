@@ -43,3 +43,9 @@
 
 (defn die! []
   (swap! state assoc :playing? false))
+
+(defn add-score [state score]
+  (update state :score + score))
+
+(defn add-score! [score]
+  (swap! state add-score score))
