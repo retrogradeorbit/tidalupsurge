@@ -283,7 +283,7 @@ void main()
             ]
 
         (s/set-y! title-text y-pos)
-        (s/set-rotation! title-text heading)
+        (s/set-rotation! title-text (/ heading 4))
 
 
         (<! (e/next-frame))
