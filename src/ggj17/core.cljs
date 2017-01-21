@@ -164,7 +164,7 @@ void main()
 
                           )
 
-              (s/set-rotation!
+              #_ (s/set-rotation!
                player
                (Math/atan
                 (*
@@ -181,4 +181,3 @@ void main()
       )
 
     ))
-
