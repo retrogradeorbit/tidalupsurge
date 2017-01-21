@@ -164,6 +164,15 @@ void main()
     clouds)))
 
 
+(defn constrain-pos [pos width height amp freq phase]
+  (let [[x y] (vec2/as-vector pos)
+        wave-y (wave-y-position width height amp freq phase x)]
+    (vec2/vec2 x (if (<= y wave-y) y wave-y))
+
+
+    )
+  )
+
 (defonce main
   (go                              ;-until-reload
                                         ;state
