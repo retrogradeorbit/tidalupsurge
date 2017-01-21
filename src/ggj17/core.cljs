@@ -193,13 +193,14 @@ void main()
         [clouds-front (make-clouds (.-innerWidth js/window) 1.0)
          clouds-back (make-clouds (.-innerWidth js/window) 0.8)]
 
-      (let [shader (wave-line [1 1])
+         (let [shader (wave-line [1 1])
             ]
         (set-texture-filter bg shader)
         (loop [fnum 0
-               xpos 0]
-          (let [amp 100 ;(* 50 (Math/sin (/ fnum 20)))
-                phase (/ fnum 5)
+               pos (vec2/vec2 0 0)
+               vel (vec2/vec2 0 0)]
+          (let [
+                phase (/ fnum 15)
                 freq 0.01
 
                 height (.-innerHeight js/window)
@@ -207,18 +208,25 @@ void main()
 
                 joy (get-player-input-vec2)
                 half-width (/ (.-innerHeight js/window) 2)
+
+                vel (vec2/add vel gravity)
+                pos (vec2/add pos vel)
+                
+                constrained-pos (constrain-pos pos width height amp freq phase)
                 ]
             (set-shader-uniforms shader fnum amp freq phase)
 
-            (s/set-pos! player xpos
+            (s/set-pos! player constrained-pos
+
+                        #_
+                        (vec2/get-x pos)
+
+                        #_
                         (wave-y-position
                          width height
                          amp freq phase
-                         xpos)
-                        #_
-                        (- (* height (*
-                                      (/ amp height)
-                                      (Math/sin (+ (/ (* freq (+ xpos half-width)) width) phase)))) 20)
+                         (vec2/get-x pos))
+
 
                         )
 
@@ -236,7 +244,9 @@ void main()
 
 
             (<! (e/next-frame))
-            (recur (inc fnum) (+ xpos (* 3 (vec2/get-x joy)))))
+            (recur (inc fnum)
+                   (vec2/add constrained-pos joy)
+                   vel))
           )))
 
       )
