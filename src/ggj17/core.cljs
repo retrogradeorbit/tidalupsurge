@@ -11,6 +11,7 @@
             [infinitelives.utils.console :refer [log]]
 
             [ggj17.assets :as assets]
+            [ggj17.state :as state]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -20,16 +21,7 @@
 
 (enable-console-print!)
 
-
-(def amp 100)
-(def freq 0.005)
 (def gravity (vec2/vec2 0 0.1))
-
-(def state (atom {:playing false}))
-
-;; define your app data so that it doesn't get over-written on reload
-
-(defonce state (atom {:text "Hello world!"}))
 
 (def fragment-shader-glsl
 
@@ -97,7 +89,7 @@ void main()
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
-  (swap! state update-in [:__figwheel_counter] inc)
+  (swap! state/state update-in [:__figwheel_counter] inc)
   )
 
 (defonce bg-colour 0x52c0e5)
@@ -165,10 +157,6 @@ void main()
         (s/set-pos! cloud x-pos y-pos )))
     clouds)))
 
-(defn playing? []
-  (js/console.log (:playing @state))
-  (:playing @state))
-
 (defn start-pressed? []
   (e/is-pressed? :space))
 
@@ -189,12 +177,27 @@ void main()
     (vec2/vec2 x (if (on-wave? pos width height amp freq phase) wave-y y))))
 
 
-(defn update-background [shader clouds-front clouds-back fnum amp freq phase fnum width height]
+(defn update-background [shader clouds-front clouds-back fnum amp freq phase width height]
   (set-shader-uniforms shader fnum amp freq phase)
 
   (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
   (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
   )
+
+(defn wave-update-thread [shader clouds-front clouds-back]
+  (go
+    (loop [fnum 0]
+      (let [{:keys [amp freq phase]} (:wave @state/state)]
+        (update-background shader clouds-front clouds-back fnum amp freq phase
+                           (.-innerWidth js/window)
+                           (.-innerHeight js/window))
+        (swap! state/state
+               #(-> %
+                    (assoc-in [:wave :fnum] fnum)
+                    (assoc-in [:wave :phase] (/ fnum 15)))
+               )
+        (<! (e/next-frame))
+        (recur (inc fnum))))))
 
 (defonce main
   (go                              ;-until-reload
@@ -222,7 +225,8 @@ void main()
             ]
         (set-texture-filter bg shader)
 
-
+        (wave-update-thread shader clouds-front clouds-back)
+    
         (loop [fnum 0
                pos (vec2/vec2 0 0)
                vel (vec2/vec2 0 0)
@@ -230,7 +234,7 @@ void main()
                heading-delta 0
                ]
           (let [
-                phase (/ fnum 15)
+                {:keys [amp freq phase]} (:wave @state/state)
 
                 height (.-innerHeight js/window)
                 width (.-innerWidth js/window)
@@ -259,11 +263,8 @@ void main()
                 ;; damped heading delta back to 0
                 heading-delta (if (neg? heading-delta)
                                 (min 0 (+ heading-delta 0.001))
-                                (max 0 (- heading-delta 0.001))
-                                )
-                ]
-
-            (update-background shader clouds-front clouds-back fnum amp freq phase fnum width height)
+                                (max 0 (- heading-delta 0.001)))
+                ]            
 
             ;(titlescreen fnum)
 
