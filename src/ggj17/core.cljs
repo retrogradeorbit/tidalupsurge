@@ -164,6 +164,7 @@ void main()
 
 (defn titlescreen-thread [title-text]
   (go-while (not (start-pressed?))
+    (state/set-amp! 20)
     (loop [fnum 0]
         (s/set-y! title-text fnum)
         (<! (e/next-frame))
@@ -208,6 +209,7 @@ void main()
 
 (defn player-thread [player]
   (go-while (not (dead?))
+    (state/set-amp! 100)
     (loop [fnum 0
            pos (vec2/vec2 0 0)
            vel (vec2/vec2 0 0)
