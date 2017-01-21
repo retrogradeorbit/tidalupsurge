@@ -159,6 +159,32 @@ void main()
     clouds)))
 
 
+(defn start? []
+  (e/is-pressed? :space))
+
+(defn titlescreen []
+  (go-while (not (start?))
+    (m/with-sprite canvas :player
+      [title-text (s/make-sprite  :title-text :scale scale :x 0 :y 0)]
+      (loop [frame 0]
+        (s/set-y! title-text frame)
+        (<! (e/next-frame))
+        (recur (inc frame))))))
+
+
+(defn float-boat [player xpos height width amp freq phase]
+  (s/set-pos! player xpos
+              (wave-y-position
+               width height
+               amp freq phase
+               xpos)
+              #_
+              (- (* height (*
+                            (/ amp height)
+                            (Math/sin (+ (/ (* freq (+ xpos half-width)) width) phase)))) 20))
+
+  )
+
 (defonce main
   (go                              ;-until-reload
                                         ;state
@@ -168,6 +194,8 @@ void main()
     (t/load-sprite-sheet!
      (r/get-texture :spritesheet :nearest)
      assets/sprites)
+
+
 
     (m/with-sprite :player
       [
@@ -182,31 +210,22 @@ void main()
       (let [shader (wave-line [1 1])
             ]
         (set-texture-filter bg shader)
+
+        (<! (titlescreen))
+
         (loop [fnum 0
                xpos 0]
           (let [amp 100 ;(* 50 (Math/sin (/ fnum 20)))
                 phase (/ fnum 5)
                 freq 0.01
-
                 height (.-innerHeight js/window)
                 width (.-innerWidth js/window)
 
                 joy (get-player-input-vec2)
-                half-width (/ (.-innerHeight js/window) 2)
-                ]
+                half-width (/ (.-innerHeight js/window) 2)]
             (set-shader-uniforms shader fnum amp freq phase)
 
-            (s/set-pos! player xpos
-                        (wave-y-position
-                         width height
-                         amp freq phase
-                         xpos)
-                        #_
-                        (- (* height (*
-                                      (/ amp height)
-                                      (Math/sin (+ (/ (* freq (+ xpos half-width)) width) phase)))) 20)
-
-                        )
+            (float-boat player xpos height width amp freq phase)
 
             (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
             (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
