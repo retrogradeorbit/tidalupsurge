@@ -18,13 +18,18 @@
   :plugins [[lein-figwheel "0.5.8"]
             [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]]
 
-  :source-paths ["src"]
+  :source-paths ["src"
+                 "checkouts/infinitelives.pixi/src"
+                 "checkouts/infinitelives.utils/src"
+                 ]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
   :cljsbuild {:builds
               [{:id "dev"
-                :source-paths ["src"]
+                :source-paths ["src"
+                               "checkouts/infinitelives.pixi/src"
+                               "checkouts/infinitelives.utils/src"]
 
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
