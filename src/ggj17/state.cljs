@@ -20,8 +20,10 @@
   )
 
 (defn set-health [state health]
-  (assoc state :health health)
-  )
+  (assoc state :health health))
+
+(defn set-health! [health]
+  (swap! state set-health health))
 
 (defn playing? []
   true)

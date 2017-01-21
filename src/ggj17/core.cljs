@@ -68,10 +68,14 @@ void main()
      amp
      (Math/sin
          (+ phase
-            (* freq x))
-         )
-     )
-  )
+            (* freq x)))))
+
+(defn wave-theta [width height amp freq phase x]
+  (* 0.7
+     (Math/atan     
+      (Math/cos
+       (+ phase
+          (* freq x))))))
 
 (defn wave-line [resolution]
   (js/PIXI.AbstractFilter.
@@ -238,7 +242,7 @@ void main()
             vel (vec2/sub constrained-pos pos)
 
             heading (if player-on-wave?
-                      (Math/atan (* 0.2 (Math/cos (+ (/ (* 640 freq 0.25) width) phase))))
+                      (wave-theta width height amp freq phase (vec2/get-x pos2))
                       (+ heading heading-delta))
 
             heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
