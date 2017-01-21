@@ -47,7 +47,9 @@ vec3 hsv2rgb (vec3 c)
 
 void main()
 {
-  if (vTextureCoord.y < (0.5 + (amp / height) * sin(((640.0 * freq / width) * vTextureCoord.x + phase))))
+  float x = vTextureCoord.x * width - (width/2.0);
+  float y = ((amp * sin(freq * x + phase)) + (height/2.0)) / height;
+  if (vTextureCoord.y < y)
   {
     gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
   }
@@ -58,7 +60,18 @@ void main()
   }
 }
 "
-)
+  )
+
+(defn wave-y-position [width height amp freq phase x]
+  
+  (* 
+     amp
+     (Math/sin
+         (+ phase
+            (* freq x))
+         )
+     )
+  )
 
 (defn wave-line [resolution]
   (js/PIXI.AbstractFilter.
@@ -107,10 +120,10 @@ void main()
     (.generateTexture bg false)))
 
 
-(defn set-shader-uniforms [shader fnum]
-  (set! (.-uniforms.amp.value shader) (* 30 (Math/sin (/ fnum 20))))
-  (set! (.-uniforms.freq.value shader) 10.0)
-  (set! (.-uniforms.phase.value shader) (* fnum 0.03))
+(defn set-shader-uniforms [shader fnum amp freq phase]
+  (set! (.-uniforms.amp.value shader) amp)
+  (set! (.-uniforms.freq.value shader) freq)
+  (set! (.-uniforms.phase.value shader) phase)
   (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
   (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
   )
@@ -171,19 +184,27 @@ void main()
         (set-texture-filter bg shader)
         (loop [fnum 0
                xpos 0]
-          (let [amp (* 30 (Math/sin (/ fnum 20)))
-                phase (* fnum 0.03)
-                freq 10
+          (let [amp 100 ;(* 50 (Math/sin (/ fnum 20)))
+                phase (/ fnum 5)
+                freq 0.01
 
                 height (.-innerHeight js/window)
                 width (.-innerWidth js/window)
+
+                joy (get-player-input-vec2)
+                half-width (/ (.-innerHeight js/window) 2)
                 ]
-            (set-shader-uniforms shader fnum)
+            (set-shader-uniforms shader fnum amp freq phase)
 
             (s/set-pos! player xpos
+                        (wave-y-position
+                         width height
+                         amp freq phase
+                         xpos)
+                        #_
                         (- (* height (*
                                       (/ amp height)
-                                      (Math/sin (+ (/ (* 640 freq 0.5) width) phase)))) 20)
+                                      (Math/sin (+ (/ (* freq (+ xpos half-width)) width) phase)))) 20)
 
                         )
 
@@ -201,7 +222,7 @@ void main()
 
 
             (<! (e/next-frame))
-            (recur (inc fnum) (+ xpos 1)))
+            (recur (inc fnum) (+ xpos (* 3 (vec2/get-x joy)))))
           )))
 
       )
