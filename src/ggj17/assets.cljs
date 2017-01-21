@@ -7,11 +7,11 @@
    :upsurge {:pos [100 32] :size [156 32]}
    :cloud {:pos [48 0] :size [48 32]}
 
-   :explosion-1 {:pos [0 64] :size [48 32]}
-   :explosion-2 {:pos [0 96] :size [48 32]}
-   :explosion-3 {:pos [0 128] :size [48 32]}
-   :explosion-4 {:pos [0 160] :size [48 32]}
-   :explosion-5 {:pos [0 192] :size [48 32]}
-   :explosion-6 {:pos [0 224] :size [48 32]}
+   :explode-1 {:pos [0 64] :size [48 32]}
+   :explode-2 {:pos [0 96] :size [48 32]}
+   :explode-3 {:pos [0 128] :size [48 32]}
+   :explode-4 {:pos [0 160] :size [48 32]}
+   :explode-5 {:pos [0 192] :size [48 32]}
+   :explode-6 {:pos [0 224] :size [48 32]}
 
    })

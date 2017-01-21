@@ -12,6 +12,7 @@
             [infinitelives.utils.console :refer [log]]
 
             [ggj17.assets :as assets]
+            [ggj17.explosion :as explosion]
             [ggj17.state :as state]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
@@ -204,69 +205,67 @@ void main()
   false))
 
 (defn player-thread [player]
-  (go-while (not (dead?))
-    (state/set-amp! 100)
-    (loop [fnum 0
-           pos (vec2/vec2 0 0)
-           vel (vec2/vec2 0 0)
-           heading 0
-           heading-delta 0
-           last-frame-on-wave? false
+  (go-while
+   (not (dead?))
+   (state/set-amp! 100)
+   (loop [fnum 0
+          pos (vec2/vec2 0 0)
+          vel (vec2/vec2 0 0)
+          heading 0
+          heading-delta 0
+          last-frame-on-wave? false
+          ]
+     (let [
+           {:keys [amp freq phase]} (:wave @state/state)
+
+           height (.-innerHeight js/window)
+           width (.-innerWidth js/window)
+
+           joy (get-player-input-vec2)
+           joy-x (vec2/get-x joy)
+           joy-y (vec2/get-y joy)
+           half-width (/ (.-innerHeight js/window) 2)
+
+           vel (vec2/add vel gravity)
+           pos2 (vec2/add pos vel)
+
+           player-on-wave? (on-wave? pos2 width height amp freq phase)
+
+           constrained-pos (constrain-pos pos2 width height amp freq phase)
+
+           ;; now calculate the vel we pass through to next iter from our changed position
+           vel (vec2/sub constrained-pos pos)
+
+           old-heading heading
+           heading (if player-on-wave?
+                     (wave-theta width height amp freq phase (vec2/get-x pos2))
+                     (+ heading heading-delta))
+
+           heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
+           ;; damped heading delta back to 0
+           heading-delta (if (neg? heading-delta)
+                           (min 0 (+ heading-delta 0.001))
+                           (max 0 (- heading-delta 0.001)))
            ]
-      (let [
-            {:keys [amp freq phase]} (:wave @state/state)
 
-            height (.-innerHeight js/window)
-            width (.-innerWidth js/window)
-
-            joy (get-player-input-vec2)
-            joy-x (vec2/get-x joy)
-            joy-y (vec2/get-y joy)
-            half-width (/ (.-innerHeight js/window) 2)
-
-            vel (vec2/add vel gravity)
-            pos2 (vec2/add pos vel)
-
-            player-on-wave? (on-wave? pos2 width height amp freq phase)
-
-            constrained-pos (constrain-pos pos2 width height amp freq phase)
-
-            ;; now calculate the vel we pass through to next iter from our changed position
-            vel (vec2/sub constrained-pos pos)
-
-            old-heading heading
-            heading (if player-on-wave?
-                      (wave-theta width height amp freq phase (vec2/get-x pos2))
-                      (+ heading heading-delta))
-
-            heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
-            ;; damped heading delta back to 0
-            heading-delta (if (neg? heading-delta)
-                            (min 0 (+ heading-delta 0.001))
-                            (max 0 (- heading-delta 0.001)))
-            ]
-
-          (let [heading-diff (Math/abs (- heading old-heading))]
-            (when (> heading-diff 0.5)
-              (state/sub-damage! (* heading-diff 10)))
-            )
+       (let [heading-diff (Math/abs (- heading old-heading))]
+         (when (> heading-diff 0.5)
+           (state/sub-damage! (* heading-diff 10))))
+       (s/set-pos! player constrained-pos)
+       (s/set-rotation! player heading)
 
 
+       (<! (e/next-frame))
 
-        ;(titlescreen fnum)
-
-        (s/set-pos! player constrained-pos)
-        (s/set-rotation! player heading)
-
-
-        (<! (e/next-frame))
-        (recur (inc fnum)
-               (vec2/add constrained-pos joy)
-               vel
-               heading
-               heading-delta
-               player-on-wave?)))
-      ))
+       (if (<= (:health @state/state) 0)
+         (explosion/explosion player)
+         (recur (inc fnum)
+                (vec2/add constrained-pos joy)
+                vel
+                heading
+                heading-delta
+                player-on-wave?))))
+   ))
 
 (defn titlescreen-thread [title-text]
   (go-while (not (start-pressed?))
