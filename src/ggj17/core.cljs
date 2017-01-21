@@ -267,23 +267,27 @@ void main()
                 player-on-wave?))))
    ))
 
-(defn titlescreen-thread [title-text]
+(defn titlescreen-thread [tidal upsurge]
   (go-while (not (start-pressed?))
     (state/set-amp! 20)
-
-     ( loop [fnum 0]
+     (loop [fnum 0]
       (let [
             {:keys [amp freq phase]} (:wave @state/state)
 
             height (.-innerHeight js/window)
             width (.-innerWidth js/window)
-            y-pos (wave-y-position width height amp freq phase 0)
-            heading (wave-theta width height amp freq phase 0)
+            tidal-y-pos (wave-y-position width height amp freq phase -200)
+            tidal-heading (wave-theta width height amp freq phase -200)
+
+            upsurge-y-pos (wave-y-position width height amp freq phase 200)
+            upsurge-heading (wave-theta width height amp freq phase 200)
             ]
 
-        (s/set-y! title-text y-pos)
-        (s/set-rotation! title-text (/ heading 4))
+        (s/set-pos! tidal -200 (+ tidal-y-pos -30))
+        (s/set-rotation! tidal (/ tidal-heading 4))
 
+        (s/set-pos! upsurge 200 (+ upsurge-y-pos -30))
+        (s/set-rotation! upsurge (/ upsurge-heading 4))
 
         (<! (e/next-frame))
         (recur (inc fnum))))))
@@ -324,7 +328,8 @@ void main()
     (m/with-sprite :player
       [
        bg (s/make-sprite (make-background) :scale 100)
-       title-text (s/make-sprite  :title-text :scale scale :x 10 :y 0)
+       tidal (s/make-sprite  :tidal :scale scale :x 0 :y 0)
+       upsurge (s/make-sprite  :upsurge :scale scale :x 0 :y 0)
        player (s/make-sprite :boat
                              :scale scale
                              :x 0 :y 0)]
@@ -341,10 +346,12 @@ void main()
 
           (while true
             (s/set-visible! player false)
-            (s/set-visible! title-text true)
-            (<! (titlescreen-thread title-text))
+            (s/set-visible! tidal true)
+            (s/set-visible! upsurge true)
+            (<! (titlescreen-thread tidal upsurge))
 
-            (s/set-visible! title-text false)
+            (s/set-visible! upsurge false)
+            (s/set-visible! tidal false)
             (s/set-visible! player true)
             (<! (player-thread player)))
           )))))
