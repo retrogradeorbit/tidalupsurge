@@ -251,7 +251,7 @@ void main()
               (state/sub-damage! (* heading-diff 10)))
             )
 
-          )
+
 
         ;(titlescreen fnum)
 
@@ -265,7 +265,7 @@ void main()
                vel
                heading
                heading-delta
-               player-on-wave?))
+               player-on-wave?)))
       ))
 
 (defn titlescreen-thread [title-text]
