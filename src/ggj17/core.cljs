@@ -268,11 +268,10 @@ void main()
                player-on-wave?)))
       ))
 
-(defn titlescreen-thread [title-text]
+(defn titlescreen-thread [tidal upsurge]
   (go-while (not (start-pressed?))
     (state/set-amp! 20)
-
-     ( loop [fnum 0]
+     (loop [fnum 0]
       (let [
             {:keys [amp freq phase]} (:wave @state/state)
 
@@ -282,9 +281,11 @@ void main()
             heading (wave-theta width height amp freq phase 0)
             ]
 
-        (s/set-y! title-text y-pos)
-        (s/set-rotation! title-text heading)
+        (s/set-y! tidal y-pos)
+        (s/set-rotation! tidal heading)
 
+        (s/set-y! upsurge y-pos)
+        (s/set-rotation! upsurge heading)
 
         (<! (e/next-frame))
         (recur (inc fnum))))))
@@ -325,7 +326,8 @@ void main()
     (m/with-sprite :player
       [
        bg (s/make-sprite (make-background) :scale 100)
-       title-text (s/make-sprite  :title-text :scale scale :x 10 :y 0)
+       tidal (s/make-sprite  :tidal :scale scale :x 0 :y 0)
+       upsurge (s/make-sprite  :upsurge :scale scale :x 0 :y 0)
        player (s/make-sprite :boat
                              :scale scale
                              :x 0 :y 0)]
@@ -342,10 +344,12 @@ void main()
 
           (while true
             (s/set-visible! player false)
-            (s/set-visible! title-text true)
-            (<! (titlescreen-thread title-text))
+            (s/set-visible! tidal true)
+            (s/set-visible! upsurge true)
+            (<! (titlescreen-thread tidal upsurge))
 
-            (s/set-visible! title-text false)
+            (s/set-visible! upsurge false)
+            (s/set-visible! tidal false)
             (s/set-visible! player true)
             (<! (player-thread player)))
           )))))
