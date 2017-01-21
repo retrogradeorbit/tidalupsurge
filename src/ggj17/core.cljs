@@ -284,10 +284,10 @@ void main()
             upsurge-heading (wave-theta width height amp freq phase 200)
             ]
 
-        (s/set-pos! tidal -200 tidal-y-pos)
+        (s/set-pos! tidal -200 (+ tidal-y-pos -30))
         (s/set-rotation! tidal (/ tidal-heading 4))
 
-        (s/set-pos! upsurge 200 upsurge-y-pos)
+        (s/set-pos! upsurge 200 (+ upsurge-y-pos -30))
         (s/set-rotation! upsurge (/ upsurge-heading 4))
 
         (<! (e/next-frame))
