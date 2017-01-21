@@ -72,7 +72,7 @@ void main()
 
 (defn wave-theta [width height amp freq phase x]
   (* 0.7
-     (Math/atan     
+     (Math/atan
       (Math/cos
        (+ phase
           (* freq x))))))
@@ -166,13 +166,6 @@ void main()
 (defn start-pressed? []
   (e/is-pressed? :space))
 
-(defn titlescreen-thread [title-text]
-  (go-while (not (start-pressed?))
-    (state/set-amp! 20)
-    (loop [fnum 0]
-        (s/set-y! title-text fnum)
-        (<! (e/next-frame))
-        (recur (inc fnum)))))
 
 (defn on-wave? [pos width height amp freq phase]
   (let [[x y] (vec2/as-vector pos)
@@ -183,7 +176,6 @@ void main()
   (let [[x y] (vec2/as-vector pos)
         wave-y (wave-y-position width height amp freq phase x)]
     (vec2/vec2 x (if (on-wave? pos width height amp freq phase) wave-y y))))
-
 
 (defn update-background [shader clouds-front clouds-back fnum amp freq phase width height]
   (set-shader-uniforms shader fnum amp freq phase)
@@ -236,7 +228,7 @@ void main()
             pos2 (vec2/add pos vel)
 
             player-on-wave? (on-wave? pos2 width height amp freq phase)
-            
+
             constrained-pos (constrain-pos pos2 width height amp freq phase)
 
             ;; now calculate the vel we pass through to next iter from our changed position
@@ -246,7 +238,7 @@ void main()
             heading (if player-on-wave?
                       (wave-theta width height amp freq phase (vec2/get-x pos2))
                       (+ heading heading-delta))
-            
+
             heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
             ;; damped heading delta back to 0
             heading-delta (if (neg? heading-delta)
@@ -254,14 +246,13 @@ void main()
                             (max 0 (- heading-delta 0.001)))
             ]
 
-        (when (and player-on-wave? (not last-frame-on-wave?))
           (let [heading-diff (Math/abs (- heading old-heading))]
             (when (> heading-diff 0.5)
               (state/sub-damage! (* heading-diff 10)))
             )
 
-          )
-        
+
+
         ;(titlescreen fnum)
 
         (s/set-pos! player constrained-pos)
@@ -274,8 +265,29 @@ void main()
                vel
                heading
                heading-delta
-               player-on-wave?))
-      )))
+               player-on-wave?)))
+      ))
+
+(defn titlescreen-thread [title-text]
+  (go-while (not (start-pressed?))
+    (state/set-amp! 20)
+
+     ( loop [fnum 0]
+      (let [
+            {:keys [amp freq phase]} (:wave @state/state)
+
+            height (.-innerHeight js/window)
+            width (.-innerWidth js/window)
+            y-pos (wave-y-position width height amp freq phase 0)
+            heading (wave-theta width height amp freq phase 0)
+            ]
+
+        (s/set-y! title-text y-pos)
+        (s/set-rotation! title-text heading)
+
+
+        (<! (e/next-frame))
+        (recur (inc fnum))))))
 
 (defn health-display-thread []
   (go-while (state/playing?)
