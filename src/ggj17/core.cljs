@@ -128,13 +128,23 @@ void main()
                        (e/is-pressed? :down) 1
                        :default 0))))
 
-(defn make-clouds [num-clouds]
+(defn make-clouds [width scale-factor]
   (vec
-    (for [cloud-num (range num-clouds)]
-      (s/make-sprite :cloud
-                     :scale scale
-                     :x (- (* cloud-num 200) 1000) :y -300)
-   )))
+    (let [num-clouds (/ width 200)]
+      (for [cloud-num (range num-clouds)]
+        (s/make-sprite :cloud
+                       :scale (* scale scale-factor)
+                       :x 0 :y 200)))))
+
+(defn shift-clouds [clouds frame width y-pos time-scale]
+  (vec (map-indexed
+    (fn [idx cloud]
+      (let [shift (* 250 idx)
+            width (+ width (* 2 scale 48))
+            x-pos (- (mod (+ shift (* frame time-scale)) width) (/ width 2))]
+        (s/set-pos! cloud x-pos y-pos )))
+    clouds)))
+
 
 (defonce main
   (go                              ;-until-reload
@@ -153,7 +163,8 @@ void main()
                              :scale scale
                              :x 0 :y 0)]
        (m/with-sprite-set :player
-        [clouds (make-clouds 10)]
+        [clouds-front (make-clouds (.-innerWidth js/window) 1.0)
+         clouds-back (make-clouds (.-innerWidth js/window) 0.8)]
 
       (let [shader (wave-line [1 1])
             ]
@@ -176,6 +187,9 @@ void main()
 
                         )
 
+            (shift-clouds clouds-front fnum width (+ (/ height -2) 150) 1)
+            (shift-clouds clouds-back fnum width (+ (/ height -2) 50) 0.8)
+
             (s/set-rotation!
              player
              (Math/atan
@@ -184,8 +198,8 @@ void main()
                   (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
               )
              )
-            
-           
+
+
             (<! (e/next-frame))
             (recur (inc fnum) (+ xpos 1)))
           )))
