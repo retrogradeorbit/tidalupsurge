@@ -111,12 +111,22 @@ void main()
   (set! (.-uniforms.amp.value shader) (* 30 (Math/sin (/ fnum 20))))
   (set! (.-uniforms.freq.value shader) 10.0)
   (set! (.-uniforms.phase.value shader) (* fnum 0.03))
-  ;(set! (.-uniforms.width.value shader) (.-innerWidth js/window))
-  ;(set! (.-uniforms.height.value shader) (.-innerHeight js/window))
+  (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
+  (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
   )
 
 (defn set-texture-filter [texture filter]
   (set! (.-filters texture) (make-array filter)))
+
+(defn get-player-input-vec2 []
+  (vec2/vec2 (or (gp/axis 0)
+                 (cond (e/is-pressed? :left) -1
+                       (e/is-pressed? :right) 1
+                       :default 0) )
+             (or (gp/axis 1)
+                 (cond (e/is-pressed? :up) -1
+                       (e/is-pressed? :down) 1
+                       :default 0))))
 
 (defn make-clouds [num-clouds]
   (vec
@@ -145,39 +155,43 @@ void main()
        (m/with-sprite-set :player
         [clouds (make-clouds 10)]
 
-        (let [shader (wave-line [1 1])
-              ]
-          (set-texture-filter bg shader)
-          (loop [fnum 0]
-            (let [amp (* 30 (Math/sin (/ fnum 20)))
-                  height (.-innerHeight js/window)
-                  width (.-innerWidth js/window)
-                  phase (* fnum 0.03)
-                  freq 10
-                  ]
-              (set-shader-uniforms shader fnum)
+      (let [shader (wave-line [1 1])
+            ]
+        (set-texture-filter bg shader)
+        (loop [fnum 0
+               xpos 0]
+          (let [amp (* 30 (Math/sin (/ fnum 20)))
+                phase (* fnum 0.03)
+                freq 10
 
-              (s/set-pos! player 0
-                          (- (* height (*
-                                        (/ amp height)
-                                        (Math/sin (+ (/ (* 640 freq 0.5) width) phase)))) 20)
+                height (.-innerHeight js/window)
+                width (.-innerWidth js/window)
+                ]
+            (set-shader-uniforms shader fnum)
 
-                          )
+            (s/set-pos! player xpos
+                        (- (* height (*
+                                      (/ amp height)
+                                      (Math/sin (+ (/ (* 640 freq 0.5) width) phase)))) 20)
 
-              #_ (s/set-rotation!
-               player
-               (Math/atan
-                (*
-                    0.2
-                    (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
-                )
-               )
+                        )
 
-
-              (<! (e/next-frame))
-              (recur (inc fnum)))
-            )))
+            (s/set-rotation!
+             player
+             (Math/atan
+              (*
+                  0.2
+                  (Math/cos (+ (/ (* 640 freq 0.25) width) phase)))
+              )
+             )
+            
+           
+            (<! (e/next-frame))
+            (recur (inc fnum) (+ xpos 1)))
+          )))
 
       )
 
     ))
+
+
