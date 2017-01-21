@@ -16,6 +16,7 @@
             [ggj17.state :as state]
             [ggj17.level :as level]
             [ggj17.clouds :as clouds]
+            [ggj17.popup :as popup]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -250,6 +251,7 @@ void main()
           heading 0
           heading-delta 0
           last-frame-on-wave? false
+          total-delta 0
           ]
      (let [
            {:keys [amp freq phase]} (:wave @state/state)
@@ -279,16 +281,23 @@ void main()
                      (wave-theta width height amp freq phase (vec2/get-x pos2))
                      (+ heading heading-delta))
 
-           heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
+           heading-delta (if player-on-wave?
+                           0
+                           (+ heading-delta (* joy-y 0.01)))
            ;; damped heading delta back to 0
            heading-delta (if (neg? heading-delta)
                            (min 0 (+ heading-delta 0.001))
                            (max 0 (- heading-delta 0.001)))
            ]
 
-       (let [heading-diff (Math/abs (- heading old-heading))]
-         (when (> heading-diff 0.5)
-           (state/sub-damage! (* heading-diff 10))))
+       ;; landing
+       (when (and (not last-frame-on-wave?) player-on-wave?)
+         (let [flips (int (/ total-delta (* 2 Math/PI)))]
+           (popup/popup! (vec2/add pos2 (vec2/vec2 0 -30)) (str flips) 200))
+         (let [heading-diff (Math/abs (- heading old-heading))]
+           (when (> heading-diff 0.5)
+             (state/sub-damage! (* heading-diff 10)))))
+       
        (s/set-pos! player constrained-pos)
        (s/set-rotation! player heading)
 
@@ -307,7 +316,12 @@ void main()
                 vel
                 heading
                 heading-delta
-                player-on-wave?))))
+                player-on-wave?
+
+                (if player-on-wave?
+                  0
+                  (+ total-delta heading-delta))
+                ))))
    ))
 
 (defn slide-text [text-string]
@@ -386,7 +400,7 @@ void main()
     (pf/pixel-font :small "img/fonts.png" [11 117] [235 169]
                    :chars ["ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                            "abcdefghijklmnopqrstuvwxyz"
-                           "0123456789!?#`'.,"]
+                           "0123456789!?#`'.,-"]
                    :kerning {"fo" -2  "ro" -1 "la" -1 }
                    :space 5)
 
