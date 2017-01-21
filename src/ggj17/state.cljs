@@ -12,6 +12,7 @@
     :pos (vec2/vec2 0 0)
 
     :health 100.0
+    :score 0
     })
   )
 
@@ -38,7 +39,8 @@
   (swap! state assoc
          :health 100
          :pos (vec2/vec2 0 0)
-         :playing? true))
+         :playing? true
+         :score 0))
 
 (defn die! []
   (swap! state assoc :playing? false))
