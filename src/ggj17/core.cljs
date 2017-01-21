@@ -165,6 +165,19 @@ void main()
     clouds)))
 
 
+(defn start? []
+  (e/is-pressed? :space))
+
+(defn titlescreen []
+  (go-while (not (start?))
+    (m/with-sprite canvas :player
+      [title-text (s/make-sprite  :title-text :scale scale :x 0 :y 0)]
+      (loop [frame 0]
+        (s/set-y! title-text frame)
+        (<! (e/next-frame))
+        (recur (inc frame))))))
+
+
 (defn constrain-pos [pos width height amp freq phase]
   (let [[x y] (vec2/as-vector pos)
         wave-y (wave-y-position width height amp freq phase x)]
@@ -184,6 +197,8 @@ void main()
      (r/get-texture :spritesheet :nearest)
      assets/sprites)
 
+
+
     (m/with-sprite :player
       [
        bg (s/make-sprite (make-background) :scale 100)
@@ -197,6 +212,9 @@ void main()
          (let [shader (wave-line [1 1])
             ]
         (set-texture-filter bg shader)
+
+        (<! (titlescreen))
+
         (loop [fnum 0
                pos (vec2/vec2 0 0)
                vel (vec2/vec2 0 0)]
