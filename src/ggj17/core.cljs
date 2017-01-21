@@ -234,20 +234,26 @@ void main()
             ;; now calculate the vel we pass through to next iter from our changed position
             vel (vec2/sub constrained-pos pos)
 
+            old-heading heading
             heading (if player-on-wave?
                       (wave-theta width height amp freq phase (vec2/get-x pos2))
                       (+ heading heading-delta))
 
             heading-delta (if player-on-wave? 0 (+ heading-delta (* joy-y 0.01)))
-
             ;; damped heading delta back to 0
             heading-delta (if (neg? heading-delta)
                             (min 0 (+ heading-delta 0.001))
                             (max 0 (- heading-delta 0.001)))
             ]
 
-        (when (and player-on-wave? (not last-frame-on-wave?))
-          (js/console.log "LANDS"))
+          (let [heading-diff (Math/abs (- heading old-heading))]
+            (when (> heading-diff 0.5)
+              (state/sub-damage! (* heading-diff 10)))
+            )
+
+          )
+
+        ;(titlescreen fnum)
 
         (s/set-pos! player constrained-pos)
         (s/set-rotation! player heading)
@@ -260,7 +266,7 @@ void main()
                heading
                heading-delta
                player-on-wave?))
-      )))
+      ))
 
 (defn titlescreen-thread [title-text]
   (go-while (not (start-pressed?))
@@ -286,7 +292,7 @@ void main()
 (defn health-display-thread []
   (go-while (state/playing?)
     (m/with-sprite :damage
-      [health-text (pf/make-text :small (->> @state/state :health (str "damage "))
+      [health-text (pf/make-text :small (->> @state/state :health int (str "damage "))
                                  :scale 3
                                  :x -110 :y -20)]
       (loop [health (:health @state/state)]
@@ -294,7 +300,7 @@ void main()
         (let [new-health (:health @state/state)]
           (when (not= new-health health)
             (.removeChildren health-text)
-            (pf/change-text! health-text :small (str "damage: " new-health)))
+            (pf/change-text! health-text :small (str "damage: " (int new-health))))
           (recur new-health)))))
   )
 
@@ -323,16 +329,16 @@ void main()
        player (s/make-sprite :boat
                              :scale scale
                              :x 0 :y 0)]
-       (m/with-sprite-set :player
+      (m/with-sprite-set :player
         [clouds-front (make-clouds (.-innerWidth js/window) 1.0)
          clouds-back (make-clouds (.-innerWidth js/window) 0.8)]
 
-         (let [shader (wave-line [1 1])]
+        (let [shader (wave-line [1 1])]
 
-        (set-texture-filter bg shader)
+          (set-texture-filter bg shader)
 
-        (wave-update-thread shader clouds-front clouds-back)
-        (health-display-thread)
+          (wave-update-thread shader clouds-front clouds-back)
+          (health-display-thread)
 
           (while true
             (s/set-visible! player false)
@@ -342,6 +348,6 @@ void main()
             (s/set-visible! title-text false)
             (s/set-visible! player true)
             (<! (player-thread player)))
-    )))))
+          )))))
 
 
