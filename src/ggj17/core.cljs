@@ -277,8 +277,8 @@ void main()
 
             height (.-innerHeight js/window)
             width (.-innerWidth js/window)
-            y-pos (wave-y-position width height amp freq phase 0)
-            heading (wave-theta width height amp freq phase 0)
+            tidal-y-pos (wave-y-position width height amp freq phase 0)
+            tidal-heading (wave-theta width height amp freq phase 0)
             ]
 
         (s/set-y! tidal y-pos)

@@ -5,4 +5,13 @@
    :title-text {:pos [0 32] :size [256 32]}
    :tidal {:pos [0 32] :size [100 32]}
    :upsurge {:pos [100 32] :size [156 32]}
-   :cloud {:pos [48 0] :size [48 32]}})
+   :cloud {:pos [48 0] :size [48 32]}
+
+   :explosion-1 {:pos [0 64] :size [48 32]}
+   :explosion-2 {:pos [0 96] :size [48 32]}
+   :explosion-3 {:pos [0 128] :size [48 32]}
+   :explosion-4 {:pos [0 160] :size [48 32]}
+   :explosion-5 {:pos [0 192] :size [48 32]}
+   :explosion-6 {:pos [0 224] :size [48 32]}
+
+   })
