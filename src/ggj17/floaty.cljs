@@ -48,6 +48,7 @@
                 (do
                   (s/set-texture! floaty :splat)
                   (sound/play-sound :zap2 0.5 false)
+                  (state/sub-damage! 3)
                   (loop [count 100]
                     (let [{:keys [wave level-x]} @state/state
                           {:keys [amp freq phase fnum]} wave
