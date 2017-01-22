@@ -97,13 +97,21 @@
 
 (def jump-vec (vec2/vec2 0 -5))
 
-;(def reset-hue []
-  ;(go
-    ;(loop []
+(defn reset-hue-for [get-val set-val base]
+  (go
+    (loop []
+      (let [hue (get-val set-val)]
+        (set-val  (mod (+ hue 0.01) 1))
+        (<! (e/next-frame))
+        (when (not (and
+                     (> (+ hue 0.02) base)
+                     (< (- hue 0.02) base)
+                     ))
+          (recur))))))
 
-      ;(state/set-sky-colour)
-      ;)
-    ;))
+(defn reset-hue []
+  (reset-hue-for state/get-sky-hue state/set-sky-hue state/base-sky-colour)
+  (reset-hue-for state/get-sea-hue state/set-sea-hue state/base-sea-colour))
 
 (defn player-thread [player]
   (go-while
@@ -213,7 +221,7 @@
        (if false ;(<= (:health @state/state) 0)
          ;; die
          (do
-           ;(reset-hue)
+           (reset-hue)
            (explosion/explosion player)
            (sound/play-sound :boom1 0.5 false)
            (<! (e/wait-frames 100))

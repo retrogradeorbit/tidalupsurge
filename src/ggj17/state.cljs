@@ -32,11 +32,15 @@
 (defn get-sea-hue []
   (get-in @state [:colours :sea-hue]))
 
+(defn set-hue [state thing hue]
+  (assoc-in state [:colours thing] hue)
+  )
+
 (defn set-sky-hue [hue]
-  (get-in state [:colours :sky-hue] hue))
+  (swap! state set-hue :sky-hue hue))
 
 (defn set-sea-hue [hue]
-  (get-in state [:colours :sea-hue] hue))
+  (swap! state set-hue :sea-hue hue))
 
 (defn set-health [state health]
   (assoc state :health health))
