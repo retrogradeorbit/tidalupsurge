@@ -143,6 +143,8 @@
                                       "sfx/gameover.ogg"
                                       "sfx/land1.ogg"
                                       "sfx/zap2.ogg"
+                                      "sfx/water-splash.ogg"
+                                      "sfx/crash.ogg"
                                       ]))
 
     (t/load-sprite-sheet!

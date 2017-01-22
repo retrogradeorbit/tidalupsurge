@@ -25,7 +25,7 @@
      (loop [fnum 0]
        (let [width (.-innerWidth js/window)
              height (.-innerHeight js/window)
-             x-pos  (Math/pow (* speed 1.05) (- 150 fnum))]
+             x-pos  (Math/pow (* speed 1.05) (- 50 fnum))]
          (s/set-x! text x-pos)
 
          (when (and play-sound (= 20 fnum)) (sound/play-sound :text-arrive 0.5 false))
