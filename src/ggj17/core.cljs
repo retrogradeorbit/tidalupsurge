@@ -97,7 +97,8 @@
   (go-while
    (not (start-pressed?))
    (instructions-thread)
-   (state/set-amp! 20)
+   (state/set-amp! 40)
+   (state/set-fnum! 0)
    (loop [fnum 0]
      (let [
            {:keys [wave level-x]} @state/state
@@ -115,10 +116,12 @@
            ]
 
        (s/set-pos! tidal -200 (+ tidal-y-pos -30))
-       (s/set-rotation! tidal (/ tidal-heading 4))
+       ;(s/set-rotation! tidal (/ tidal-heading 4))
 
        (s/set-pos! upsurge 200 (+ upsurge-y-pos -30))
-       (s/set-rotation! upsurge (/ upsurge-heading 4))
+       ;(s/set-rotation! upsurge (/ upsurge-heading 50))
+
+       (state/set-level-x! (* fnum 4))
 
        (<! (e/next-frame))
        (recur (inc fnum))))))
