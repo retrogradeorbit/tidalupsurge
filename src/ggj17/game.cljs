@@ -205,7 +205,7 @@
 
              (text/slide-text (rand-nth (consts/flip-text flips)) false always-true :top-text 40 0 1.2)
 
-             (sound/play-sound :splash1 0.3 false)
+             (sound/play-sound :water-splash 0.3 false)
 
              (when-let [sfx (consts/flip-sfx flips)]
                (sound/play-sound sfx 0.5 false))
