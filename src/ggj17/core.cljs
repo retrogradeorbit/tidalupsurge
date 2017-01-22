@@ -88,9 +88,18 @@
 
 (defn instructions-thread []
   (go-while (not (state/playing?))
-    (let [instructions ["Press any button to play" "Pull some sik flips" "Do not sink your dingy"]]
+    (let [instructions [
+                      "Press any button to play"
+                      "Pull some sik flips"
+                      "Do not sink your dingy"
+                      "Plug in a gamepad or use your keyboard"
+                      "Space or (x/b/x/y) to jump"
+                      "Left and Right to accelerate"
+                      "Up or Down to Flip"
+                      "Written by Crispin and Tim"
+                      "Built in 48 Hours for Global Game Jam 2017"]]
       (loop [strings (cycle instructions)]
-        (<! (text/slide-text (first strings) true #(not (state/playing?)) :ui 150 30 1))
+        (<! (text/slide-text-other (first strings) true #(not (state/playing?)) :ui 150 30 1))
         (recur (rest strings))))))
 
 (defn titlescreen-thread [tidal upsurge]
