@@ -16,7 +16,7 @@
                     :splash-5
                     :splash-6])
 
-(def splash-speed 4)
+(def splash-speed 8)
 
 (def splash-scale 4)
 
