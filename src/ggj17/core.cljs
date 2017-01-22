@@ -196,7 +196,6 @@
       (m/with-sprite-set :clouds
         [cloudset (clouds/get-sprites)]
         (clouds/cloud-thread cloudset)
-        (js/console.log "cloudset" (str cloudset))
 
         (let [shader (wave/wave-line [1 1])]
 

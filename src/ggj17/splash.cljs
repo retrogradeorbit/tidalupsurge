@@ -20,11 +20,13 @@
 
 (def splash-scale 4)
 
-(defn splash [entity]
-  ;(sound/play-sound (keyword (str "explode-" (rand-int 10))) 0.5 false)
+(defn splash [initial-pos]
+                                        ;(sound/play-sound (keyword (str "explode-" (rand-int 10))) 0.5 false)
+  (log "XP:" initial-pos)
+  
   (let [frameset splash-frames]
     (go
-      (let [initial-pos (s/get-pos entity)
+      (let [
             x (vec2/get-x initial-pos)
             y (vec2/get-y initial-pos)
             frames (count frameset)
@@ -45,13 +47,13 @@
                   y-pos  (wave/wave-y-position
 				   (.-innerWidth js/window)
 				   (.-innerHeight js/window)
-				   amp freq wave-x-pos x-pos)]
+				   amp freq wave-x-pos (- x-pos wave-x-pos))]
 
               ;(js/console.log "y-pos: " y-pos)
               ;(js/console.log "x-pos: " x-pos)
 
               (s/set-texture! splash (get frameset (int (/ n splash-speed)) (last frameset)))
-              (s/set-pos! splash x-pos y-pos))
+              (s/set-pos! splash (- x-pos (:level-x @state/state)) y-pos))
 
             (<! (e/next-frame))
 

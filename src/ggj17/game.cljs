@@ -177,7 +177,7 @@
        ;; landing
        (when (and (not last-frame-on-wave?) player-on-wave?)
 
-         (splash/splash player)
+         (splash/splash (vec2/vec2 level-x (vec2/get-y pos)))
 
          (let [flips (int (/ total-delta (* 2 Math/PI)))
                heading-diff (Math/abs (- heading old-heading))]

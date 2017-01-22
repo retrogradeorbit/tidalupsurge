@@ -15,9 +15,6 @@
 
 (defn setpos [floaty level-x amp freq phase fnum xpos]
   (let [wave-x-pos (+ phase level-x)]
-    (log "wave-y-pos" (.-innerWidth js/window)
-      (.-innerHeight js/window)
-      amp freq wave-x-pos xpos )
     (s/set-pos!
      floaty
                                         ;xpos
@@ -36,9 +33,6 @@
       (m/with-sprite :player
         [floaty (s/make-sprite :guy :scale 3 :x xpos :y 0)]
         (loop []
-
-          (log "LEVEL X:" (:level-x @state/state))
-          
           (let [{:keys [wave level-x]} @state/state
                 {:keys [amp freq phase fnum]} wave]
             (setpos floaty level-x amp freq phase fnum xpos)

@@ -124,7 +124,6 @@ void main()
                    y))))
 
 (defn update-background [shader fnum amp freq phase width height]
-  (log "update-background:" amp freq phase)
   (set-shader-uniforms shader amp freq phase))
 
 
