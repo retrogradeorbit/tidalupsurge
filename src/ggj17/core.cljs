@@ -21,6 +21,7 @@
             [ggj17.floaty :as floaty]
             [ggj17.game :as game]
             [ggj17.wave :as wave]
+            [ggj17.splash :as splash]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -160,7 +161,7 @@
            {:keys [amp freq phase]} wave
 
            xpos (+ level-x phase)
-           
+
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
            tidal-y-pos (wave/wave-y-position width height amp freq xpos -200)

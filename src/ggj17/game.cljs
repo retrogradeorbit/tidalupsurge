@@ -21,6 +21,7 @@
             [ggj17.floaty :as floaty]
             [ggj17.wave :as wave]
             [ggj17.consts :as consts]
+            [ggj17.splash :as splash]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -148,6 +149,9 @@
 
        ;; landing
        (when (and (not last-frame-on-wave?) player-on-wave?)
+
+         (splash/splash player)
+
          (let [flips (int (/ total-delta (* 2 Math/PI)))
                heading-diff (Math/abs (- heading old-heading))]
            (when (> heading-diff 0.5)
