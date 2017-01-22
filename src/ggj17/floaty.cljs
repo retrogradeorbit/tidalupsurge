@@ -34,7 +34,7 @@
           (let [{:keys [wave level-x]} @state/state
                 {:keys [amp freq phase fnum]} wave
                 new-pos (setpos floaty level-x amp freq phase fnum xpos)]
-
+            
             (<! (e/next-frame))
             (when (> (- xpos (:level-x @state/state)) (- (+ 30 (/ (.-innerWidth js/window) 2))))
               ;; not off screen to left
@@ -43,18 +43,19 @@
                     (vec2/sub (s/get-pos player)
                               (s/get-pos floaty)))
                    200)
-
+                
                 ;; dude hit
                 (do
                   (s/set-texture! floaty :splat)
                   (sound/play-sound :crash 0.5 false)
+                  (state/sub-damage! 3)
                   (loop [count 100]
                     (let [{:keys [wave level-x]} @state/state
                           {:keys [amp freq phase fnum]} wave
                           new-pos (setpos floaty level-x amp freq phase fnum xpos)]
                       (<! (e/next-frame))
                       (when (pos? count)
-                        (recur (dec count))))))
+                        (recur (dec count))))))                
 
                 ;; dude not hit
                 (recur)))))))))
