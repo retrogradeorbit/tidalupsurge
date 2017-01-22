@@ -11,7 +11,7 @@
             [infinitelives.utils.pathfind :as path]
             [infinitelives.utils.console :refer [log]]
             [infinitelives.utils.sound :as sound]
-            
+
             [ggj17.assets :as assets]
             [ggj17.explosion :as explosion]
             [ggj17.state :as state]
@@ -215,10 +215,7 @@ void main()
     (vec2/vec2 x (if (on-wave? pos width height amp freq phase) wave-y y))))
 
 (defn update-background [shader fnum amp freq phase width height]
-  (set-shader-uniforms shader fnum amp freq phase)
-
-  
-  )
+  (set-shader-uniforms shader fnum amp freq phase))
 
 (defn wave-update-thread [shader]
   (go
@@ -290,7 +287,7 @@ void main()
    (level/level-thread)
 
    (sound/play-sound :game-start 0.5 false)
-   
+
    (loop [fnum 0
           pos (vec2/vec2 0 0)
           vel (vec2/vec2 0 0)
@@ -312,11 +309,11 @@ void main()
 
            vel (vec2/add vel gravity)
            pos2 (vec2/add pos vel)
-           
+
            player-on-wave? (on-wave? pos2 width height amp freq phase)
 
            pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?)) jump-vec (vec2/zero)))
-           
+
            constrained-pos (constrain-pos pos2 width height amp freq phase)
 
            ;; now calculate the vel we pass through to next iter from our changed position
@@ -342,25 +339,25 @@ void main()
                heading-diff (Math/abs (- heading old-heading))]
            (when (> heading-diff 0.5)
              (state/sub-damage! (* heading-diff 3)))
-             
+
            ;; if landed and alive, popup
            (when (pos? (:health @state/state))
-             
+
              (popup/popup! (vec2/add pos2 (vec2/vec2 0 -30))
                            (rand-nth (flip-text flips))
                            200)
 
              (sound/play-sound :splash1 0.3 false)
-             
+
              (when-let [sfx (flip-sfx flips)]
                (sound/play-sound sfx 0.5 false))
-             
+
              (state/add-score! (flip-score flips))
              )
-           
-           
+
+
              ))
-       
+
        (s/set-pos! player constrained-pos)
        (s/set-rotation! player heading)
 
@@ -423,7 +420,7 @@ void main()
          (s/set-x! text x-pos)
 
          (when (= fnum 20) (sound/play-sound :text-depart 0.5 false))
-         
+
          (<! (e/next-frame))
          (when (> x-pos -1000)
            (recur (inc fnum))))))))
@@ -502,7 +499,7 @@ void main()
         [cloudset (clouds/get-sprites)]
         (clouds/cloud-thread cloudset)
         (js/console.log "cloudset" (str cloudset))
-        
+
         (let [shader (wave-line [1 1])]
 
           (set-texture-filter bg shader)

@@ -16,4 +16,12 @@
    :explode-5 {:pos [0 192] :size [48 32]}
    :explode-6 {:pos [0 224] :size [48 32]}
 
+   :splash-1 {:pos [208 64] :size [48 32]}
+   :splash-2 {:pos [208  96] :size [48 32]}
+   :splash-3 {:pos [208  128] :size [48 32]}
+   :splash-4 {:pos [208  160] :size [48 32]}
+   :splash-5 {:pos [208  192] :size [48 32]}
+   :splash-6 {:pos [208  224] :size [48 32]}
+
+
    })

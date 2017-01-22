@@ -1,4 +1,5 @@
 build/
+*.swp
 /resources/public/js/compiled/**
 figwheel_server.log
 pom.xml
