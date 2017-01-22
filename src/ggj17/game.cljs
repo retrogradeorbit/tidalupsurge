@@ -132,7 +132,7 @@
           heading-delta 0
           last-frame-on-wave? false
           total-delta 0
-          vel-x 1
+          vel-x 0
           ]
      (log "POS" pos)
      (let [
@@ -243,7 +243,13 @@
                   0
                   (+ total-delta heading-delta))
 
-                (clamp (+ vel-x (/ joy-x 5)) (- max-speed) max-speed)
+                (let [input-speed (if player-on-wave? (/ joy-x 5) 0)
+                      clamped-speed (clamp (+ vel-x input-speed) (- max-speed) max-speed)]
+                  (if player-on-wave?
+                    (* clamped-speed 0.99)
+                    clamped-speed)
+                  
+                  )
                 
                 ))))
    ))
