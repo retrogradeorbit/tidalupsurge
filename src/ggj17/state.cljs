@@ -23,11 +23,26 @@
     })
   )
 
+(defn set-phase [state phase]
+  (assoc-in state [:wave :phase] phase))
+
+(defn set-phase! [phase]
+  (swap! state set-phase phase))
+
+(defn set-fnum [state fnum]
+  (assoc-in state [:wave :fnum] fnum))
+
+(defn set-fnum! [fnum]
+  (swap! state set-fnum fnum))
+
 (defn set-amp! [amp]
   (swap! state assoc-in [:wave :amp] amp))
 
 (defn set-freq! [freq]
   (swap! state assoc-in [:wave :freq] freq))
+
+(defn set-level-x! [x]
+  (swap! state assoc :level-x x))
 
 (defn get-sky-hue []
   (get-in @state [:colours :sky-hue]))
