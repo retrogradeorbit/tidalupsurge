@@ -142,6 +142,7 @@
                                       "sfx/game-start.ogg"
                                       "sfx/gameover.ogg"
                                       "sfx/land1.ogg"
+                                      "sfx/zap2.ogg"
                                       ]))
 
     (t/load-sprite-sheet!
