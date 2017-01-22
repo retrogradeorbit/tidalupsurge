@@ -217,17 +217,19 @@ void main()
 (defn update-background [shader fnum amp freq phase width height]
   (set-shader-uniforms shader fnum amp freq phase))
 
+
 (defn wave-update-thread [shader]
   (go
     (loop [fnum 0]
-      (let [{:keys [amp freq phase]} (:wave @state/state)]
-        (update-background shader fnum amp freq phase
+      (let [{:keys [level-x wave]} @state/state
+            {:keys [amp freq phase]} wave]
+        (update-background shader fnum amp freq (+ level-x phase)
                            (.-innerWidth js/window)
                            (.-innerHeight js/window))
         (swap! state/state
                #(-> %
                     (assoc-in [:wave :fnum] fnum)
-                    (assoc-in [:wave :phase] (/ fnum 15)))
+                    (assoc-in [:level-x] (/ fnum 15)))
                )
         (<! (e/next-frame))
         (recur (inc fnum))))))
@@ -297,7 +299,9 @@ void main()
           total-delta 0
           ]
      (let [
-           {:keys [amp freq phase]} (:wave @state/state)
+           {:keys [wave level-x]} @state/state
+           {:keys [amp freq phase]} wave
+           wave-x-pos (+ level-x phase)
 
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
@@ -310,18 +314,18 @@ void main()
            vel (vec2/add vel gravity)
            pos2 (vec2/add pos vel)
 
-           player-on-wave? (on-wave? pos2 width height amp freq phase)
+           player-on-wave? (on-wave? pos2 width height amp freq wave-x-pos)
 
            pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?)) jump-vec (vec2/zero)))
 
-           constrained-pos (constrain-pos pos2 width height amp freq phase)
+           constrained-pos (constrain-pos pos2 width height amp freq wave-x-pos)
 
            ;; now calculate the vel we pass through to next iter from our changed position
            vel (vec2/sub constrained-pos pos)
 
            old-heading heading
            heading (if player-on-wave?
-                     (wave-theta width height amp freq phase (vec2/get-x pos2))
+                     (wave-theta width height amp freq wave-x-pos (vec2/get-x pos2))
                      (+ heading heading-delta))
 
            heading-delta (if player-on-wave?
@@ -433,30 +437,34 @@ void main()
         (recur (rest strings))))))
 
 (defn titlescreen-thread [tidal upsurge]
-  (go-while (not (start-pressed?))
-    (instructions-thread)
-    (state/set-amp! 20)
-     (loop [fnum 0]
-      (let [
-            {:keys [amp freq phase]} (:wave @state/state)
+  (go-while
+   (not (start-pressed?))
+   (instructions-thread)
+   (state/set-amp! 20)
+   (loop [fnum 0]
+     (let [
+           {:keys [wave level-x]} @state/state
+           {:keys [amp freq phase]} wave
 
-            height (.-innerHeight js/window)
-            width (.-innerWidth js/window)
-            tidal-y-pos (wave-y-position width height amp freq phase -200)
-            tidal-heading (wave-theta width height amp freq phase -200)
+           xpos (+ level-x phase)
 
-            upsurge-y-pos (wave-y-position width height amp freq phase 200)
-            upsurge-heading (wave-theta width height amp freq phase 200)
-            ]
+           height (.-innerHeight js/window)
+           width (.-innerWidth js/window)
+           tidal-y-pos (wave-y-position width height amp freq xpos -200)
+           tidal-heading (wave-theta width height amp freq xpos -200)
 
-        (s/set-pos! tidal -200 (+ tidal-y-pos -30))
-        (s/set-rotation! tidal (/ tidal-heading 4))
+           upsurge-y-pos (wave-y-position width height amp freq xpos 200)
+           upsurge-heading (wave-theta width height amp freq xpos 200)
+           ]
 
-        (s/set-pos! upsurge 200 (+ upsurge-y-pos -30))
-        (s/set-rotation! upsurge (/ upsurge-heading 4))
+       (s/set-pos! tidal -200 (+ tidal-y-pos -30))
+       (s/set-rotation! tidal (/ tidal-heading 4))
 
-        (<! (e/next-frame))
-        (recur (inc fnum))))))
+       (s/set-pos! upsurge 200 (+ upsurge-y-pos -30))
+       (s/set-rotation! upsurge (/ upsurge-heading 4))
+
+       (<! (e/next-frame))
+       (recur (inc fnum))))))
 
 (defonce main
   (go                              ;-until-reload
@@ -517,6 +525,4 @@ void main()
             (s/set-visible! tidal false)
             (s/set-visible! player true)
             (<! (player-thread player)))
-          )))))
-
-
+  )))))
