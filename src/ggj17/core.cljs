@@ -30,6 +30,7 @@
 
 (enable-console-print!)
 
+
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
@@ -86,10 +87,8 @@
 
 
 (defn update-background [shader fnum amp freq phase width height]
-  (set-shader-uniforms shader fnum amp freq phase)
+  (set-shader-uniforms shader fnum amp freq phase))
 
-
-  )
 
 (defn wave-update-thread [shader]
   (go
