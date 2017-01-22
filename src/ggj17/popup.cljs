@@ -27,6 +27,6 @@
         (<! (e/next-frame))
         (when (pos? life)
           (recur (dec life)
-                 (vec2/add pos (vec2/vec2 0 -2))
-                 (+ scale 0.01)
+                 (vec2/add pos (vec2/vec2 0 2))
+                 (+ scale 0.04)
                  (max 0 (- alpha 0.01))))))))

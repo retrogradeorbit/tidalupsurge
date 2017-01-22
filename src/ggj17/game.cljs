@@ -187,8 +187,8 @@
            ;; if landed and alive, popup
            (when (pos? (:health @state/state))
 
-             (popup/popup! (vec2/add pos2 (vec2/vec2 0 -30))
-                           (rand-nth (consts/flip-text flips))
+             (popup/popup! (vec2/add pos2 (vec2/vec2 0 30))
+                           (str (consts/flip-score flips))
                            200)
 
              (sound/play-sound :splash1 0.3 false)
