@@ -10,7 +10,7 @@
                    [infinitelives.pixi.pixelfont :as pf]
                    ))
 
-(defn level-thread []
+(defn level-thread [player]
   (go
    (loop [fnum 0]
      (let [level-x (:level-x @state/state)
@@ -38,7 +38,7 @@
             (zero? (dec (rem (int level-x) 2432)))
             (zero? (dec (rem (int level-x) 1234)))
             )
-         (floaty/spawn-floaty! (+ level-x 30 (/ (.-innerWidth js/window) 2))))
+         (floaty/spawn-floaty! player (+ level-x 30 (/ (.-innerWidth js/window) 2))))
 
        (<! (e/next-frame))
        (when (state/playing?)
