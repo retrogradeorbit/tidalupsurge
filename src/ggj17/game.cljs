@@ -224,10 +224,12 @@
 
        (<! (e/next-frame))
 
+       (js/console.log "health: " (state/get-health) )
+
        (if (<= (state/get-health) 0)
          ;; die
-         (state/set-health! 0)
          (do
+           (state/set-health! 0)
            (reset-hue)
            (explosion/explosion player)
            (sound/play-sound :boom1 0.5 false)
