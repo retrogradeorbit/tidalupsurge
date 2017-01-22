@@ -31,7 +31,7 @@
   )
 
 (def gravity (vec2/vec2 0 0.1))
-(def max-speed 20)
+(def max-speed 10)
 
 (defn dead? []
   (or (e/is-pressed? :esc)

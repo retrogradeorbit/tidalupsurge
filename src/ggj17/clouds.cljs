@@ -55,5 +55,5 @@
   (go
     (loop [c 0]
       (<! (e/next-frame))
-      (set-cloud-positions! clouds [(-> state/state deref :wave :fnum (* 5)) 0])
+      (set-cloud-positions! clouds [(-> state/state deref :level-x) 0])
       (recur (inc c)))))
