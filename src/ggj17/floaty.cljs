@@ -8,23 +8,10 @@
             [infinitelives.utils.console :refer [log]]
             [infinitelives.pixi.sprite :as s]
             [ggj17.state :as state]
+            [ggj17.wave :as wave]
             [cljs.core.async :refer [<! timeout]])
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]))
-
-(defn wave-y-position [width height amp freq phase x]
-  (*
-     amp
-     (Math/sin
-         (+ phase
-            (* freq x)))))
-
-(defn wave-theta [width height amp freq phase x]
-  (* 0.7
-     (Math/atan
-      (Math/cos
-       (+ phase
-          (* freq x))))))
 
 (defn spawn-floaty! [xpos]
   (go
@@ -37,7 +24,7 @@
               wave-x-pos (+ phase level-x)]
           (s/set-pos!
            floaty
-           xpos (wave-y-position
+           xpos (wave/wave-y-position
                  (.-innerWidth js/window)
                  (.-innerHeight js/window)
                  amp freq wave-x-pos xpos)))
