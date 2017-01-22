@@ -35,6 +35,9 @@ uniform float phase;
 uniform float width;
 uniform float height;
 
+uniform float seaHue;
+uniform float skyHue;
+
 float rand(vec2 co){
   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
@@ -53,12 +56,12 @@ void main()
   float y = ((amp * sin(freq * x + phase)) + (height/2.0)) / height;
   if (vTextureCoord.y < (y + topWave))
   {
-    gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
+    gl_FragColor = vec4(hsv2rgb(vec3(skyHue, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
   }
   else
   {
     // More green, less blue as we get to the bottom
-    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.1, 1.0 - vTextureCoord.y, 1.0);
+    gl_FragColor = vec4(hsv2rgb(vec3(seaHue, 1.0, (1.0 - vTextureCoord.y))), 1.0);
   }
 }
 "
@@ -89,6 +92,9 @@ void main()
         "phase" #js {"type" "1f" "value" 0.0}
         "width" #js {"type" "1f" "value" 300}
         "height" #js {"type" "1f" "value" 300}
+
+        "skyHue" #js {"type" "1f" "value" 0.65}
+        "seaHue" #js {"type" "1f" "value" 0.65}
 
         }))
 

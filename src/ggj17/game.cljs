@@ -88,6 +88,14 @@
 
 (def jump-vec (vec2/vec2 0 -5))
 
+;(def reset-hue []
+  ;(go
+    ;(loop []
+
+      ;(state/set-sky-colour)
+      ;)
+    ;))
+
 (defn player-thread [player]
   (go-while
    (not (dead?))
@@ -116,7 +124,7 @@
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
 
-          
+
            joy (get-player-input-vec2)
            joy-x (vec2/get-x joy)
            joy-y (vec2/get-y joy)
@@ -184,6 +192,7 @@
        (if (<= (:health @state/state) 0)
          ;; die
          (do
+           ;(reset-hue)
            (explosion/explosion player)
            (sound/play-sound :boom1 0.5 false)
            (<! (e/wait-frames 100))
