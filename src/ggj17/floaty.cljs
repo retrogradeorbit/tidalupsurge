@@ -29,12 +29,12 @@
   (let [start-level-x (:level-x @state/state)]
     (go
       (m/with-sprite :player
-        [floaty (s/make-sprite :guy :scale 3 :x xpos :y 0)]
+        [floaty (s/make-sprite :guy :scale 3 :x xpos :y 0 :yhandle 0.3)]
         (loop []
           (let [{:keys [wave level-x]} @state/state
                 {:keys [amp freq phase fnum]} wave
                 new-pos (setpos floaty level-x amp freq phase fnum xpos)]
-            
+
             (<! (e/next-frame))
             (when (> (- xpos (:level-x @state/state)) (- (+ 30 (/ (.-innerWidth js/window) 2))))
               ;; not off screen to left
@@ -43,7 +43,7 @@
                     (vec2/sub (s/get-pos player)
                               (s/get-pos floaty)))
                    200)
-                
+
                 ;; dude hit
                 (do
                   (s/set-texture! floaty :splat)
@@ -55,7 +55,7 @@
                           new-pos (setpos floaty level-x amp freq phase fnum xpos)]
                       (<! (e/next-frame))
                       (when (pos? count)
-                        (recur (dec count))))))                
+                        (recur (dec count))))))
 
                 ;; dude not hit
                 (recur)))))))))

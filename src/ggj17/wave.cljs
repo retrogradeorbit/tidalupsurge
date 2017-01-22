@@ -56,7 +56,7 @@ void main()
 {
   float x = vTextureCoord.x * width - (width/2.0);
   float adj_levelx = levelx * width - (width/2.0);
-  float topWave =  abs(0.02 * (sin(freq * 20.0 * x + (levelx / 10.0))));
+  float topWave =  abs(0.01 * (sin(freq * 20.0 * x + (levelx / 10.0))));
   float y = ((amp * sin(freq * (x + phase))) + (height/2.0)) / height;
   if (vTextureCoord.y < (y + topWave))
   {
@@ -81,11 +81,11 @@ void main()
        (* freq (+ phase x))))))
 
 (defn wave-theta [width height amp freq phase x]
-  (* 0.7
-     (Math/atan
-      (Math/cos
-       (+ phase
-          (* freq (+ phase x)))))))
+  (Math/atan
+   (-
+    (wave-y-position width height amp freq phase x)
+    (wave-y-position width height amp freq phase (dec x)
+  ))))
 
 (defn set-shader-uniforms [shader amp freq phase]
   (set! (.-uniforms.amp.value shader) amp)
@@ -144,8 +144,8 @@ void main()
   (swap! state/state
          #(-> %
               (assoc-in [:wave :fnum] fnum)
-              (assoc-in [:colours :sky-hue] (+ (state/get-sky-hue) 0.0001))
-              (assoc-in [:colours :sea-hue] (+ (state/get-sea-hue) 0.0001))
+              (assoc-in [:colours :sky-hue] (+ (state/get-sky-hue) 0.00005))
+              (assoc-in [:colours :sea-hue] (+ (state/get-sea-hue) 0.00005))
                                         ;(assoc-in [:level-x] (/ fnum 15))
               )))
 

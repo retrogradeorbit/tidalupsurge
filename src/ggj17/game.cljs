@@ -32,7 +32,8 @@
   )
 
 (def gravity (vec2/vec2 0 0.1))
-(def max-speed 10)
+(def max-speed 13)
+(def water-drag 0.998)
 
 (defn dead? []
   (or (e/is-pressed? :esc)
@@ -260,7 +261,6 @@
                 (let [input-speed (if player-on-wave? (/ joy-x 5) 0)
                       clamped-speed (clamp (+ vel-x input-speed) (- max-speed) max-speed)]
                   (if player-on-wave?
-                    (* clamped-speed 0.99)
+                    (* clamped-speed water-drag)
                     clamped-speed)
                   )))))))
-

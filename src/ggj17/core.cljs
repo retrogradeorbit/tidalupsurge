@@ -124,11 +124,11 @@
            upsurge-heading (wave/wave-theta width height amp freq xpos 200)
            ]
 
-       (s/set-pos! tidal -200 (+ tidal-y-pos -30))
-       ;(s/set-rotation! tidal (/ tidal-heading 4))
+       (s/set-pos! tidal -200 (+ tidal-y-pos 0))
+       (s/set-rotation! tidal (/ tidal-heading 1))
 
-       (s/set-pos! upsurge 200 (+ upsurge-y-pos -30))
-       ;(s/set-rotation! upsurge (/ upsurge-heading 50))
+       (s/set-pos! upsurge 200 (+ upsurge-y-pos 0))
+       (s/set-rotation! upsurge (/ upsurge-heading 1))
 
        (state/set-level-x! (* fnum 4))
 
