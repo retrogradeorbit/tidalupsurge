@@ -161,7 +161,11 @@
 
            player-on-wave? (wave/on-wave? pos2 width height amp freq wave-x-pos)
 
-           pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?)) jump-vec (vec2/zero)))
+           pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?))
+                                 (do
+                                   (sound/play-sound :jump1 0.5 false)
+                                   jump-vec)
+                                 (vec2/zero)))
 
            constrained-pos (wave/constrain-pos
                             pos2
@@ -259,7 +263,7 @@
                   (+ total-delta heading-delta))
 
                 (let [input-speed (if player-on-wave? (/ joy-x 5) 0)
-                      clamped-speed (clamp (+ vel-x input-speed) (- max-speed) max-speed)]
+                      clamped-speed (clamp (+ vel-x input-speed) 0 max-speed)]
                   (if player-on-wave?
                     (* clamped-speed water-drag)
                     clamped-speed)

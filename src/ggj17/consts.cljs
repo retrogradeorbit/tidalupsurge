@@ -27,6 +27,9 @@
 
 (def flip-text
   {
+   -6 ["that one had snow on it"]
+   -5 ["insane!"]
+   -4 ["what a sight!"]
    -3 ["sick triple backflip!"]
    -2 ["double backflip"]
    -1 ["backward flip!"
@@ -44,10 +47,17 @@
    3 ["triple flippage"
       "three full loops"
       "you're a loop master"]
+   6 ["that one had snow on it"]
+   5 ["insane!"]
+   4 ["what a sight!"]
    })
 
 (def flip-score
   {
+   -7 10000
+   -6 4000
+   -5 2000
+   -4 1000
    -3 500
    -2 200
    -1 50
@@ -55,6 +65,10 @@
    1 50
    2 200
    3 500
+   7 10000
+   6 4000
+   5 2000
+   4 1000
    })
 
 (def flip-sfx
