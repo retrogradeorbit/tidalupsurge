@@ -23,7 +23,7 @@
 (defn splash [initial-pos]
                                         ;(sound/play-sound (keyword (str "explode-" (rand-int 10))) 0.5 false)
   (log "XP:" initial-pos)
-  
+
   (let [frameset splash-frames]
     (go
       (let [
@@ -43,14 +43,10 @@
 			(let [x-pos x
                   wave-x-pos (+ phase level-x)
 
-                  ; Getting the y-pos doesn't seem to work, always getting the same position
                   y-pos  (wave/wave-y-position
 				   (.-innerWidth js/window)
 				   (.-innerHeight js/window)
 				   amp freq wave-x-pos (- x-pos wave-x-pos))]
-
-              ;(js/console.log "y-pos: " y-pos)
-              ;(js/console.log "x-pos: " x-pos)
 
               (s/set-texture! splash (get frameset (int (/ n splash-speed)) (last frameset)))
               (s/set-pos! splash (- x-pos (:level-x @state/state)) y-pos))

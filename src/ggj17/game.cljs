@@ -20,6 +20,7 @@
             [ggj17.popup :as popup]
             [ggj17.floaty :as floaty]
             [ggj17.wave :as wave]
+            [ggj17.text :as text]
             [ggj17.consts :as consts]
             [ggj17.splash :as splash]
             )
@@ -113,6 +114,9 @@
   (reset-hue-for state/get-sky-hue state/set-sky-hue state/base-sky-colour)
   (reset-hue-for state/get-sea-hue state/set-sea-hue state/base-sea-colour))
 
+(defn always-true []
+  true)
+
 (defn player-thread [player]
   (go-while
    (not (dead?))
@@ -163,7 +167,7 @@
                             width height amp freq wave-x-pos)
 
            ;; now calculate the vel we pass through to next iter from our changed position
-           
+
            vel (vec2/sub constrained-pos pos)
 
            old-heading heading
@@ -198,6 +202,8 @@
              (popup/popup! (vec2/add pos2 (vec2/vec2 0 30))
                            (str (consts/flip-score flips))
                            200)
+
+             (text/slide-text (rand-nth (consts/flip-text flips)) false always-true :top-text 40 0 1.2)
 
              (sound/play-sound :splash1 0.3 false)
 
@@ -244,7 +250,7 @@
                   (+ total-delta heading-delta))
 
                 (clamp (+ vel-x (/ joy-x 5)) (- max-speed) max-speed)
-                
+
                 ))))
    ))
 

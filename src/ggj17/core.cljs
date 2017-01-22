@@ -19,6 +19,7 @@
             [ggj17.clouds :as clouds]
             [ggj17.popup :as popup]
             [ggj17.floaty :as floaty]
+            [ggj17.text :as text]
             [ggj17.game :as game]
             [ggj17.wave :as wave]
             [ggj17.splash :as splash]
@@ -41,10 +42,11 @@
 (defonce bg-colour 0x52c0e5)
 
 (defonce canvas
-  (c/init {:layers [:bg :ocean :player :clouds :damage :score :ui]
+  (c/init {:layers [:bg :ocean :player :clouds :damage :score :ui :top-text]
            :background bg-colour
            :expand true
-           :origins {:damage :bottom-right
+           :origins {:top-text :top
+                     :damage :bottom-right
                      :score :bottom-left}}))
 
 (def scale 3)
@@ -83,47 +85,12 @@
    (gp/button-pressed? 0 :x)
    (gp/button-pressed? 0 :y)))
 
-(defn slide-text [text-string]
-  (go-while
-   (not (state/playing?))
-   (m/with-sprite :ui
-     [text (pf/make-text :small text-string
-                         :scale 3
-                         :x 0 :y 150)]
-
-     ;; Slide in
-     (loop [fnum 0]
-       (let [width (.-innerWidth js/window)
-             height (.-innerHeight js/window)
-             x-pos  (Math/pow 1.05 (- 150 fnum))]
-         (s/set-x! text x-pos)
-
-         (when (= 20 fnum) (sound/play-sound :text-arrive 0.5 false))
-
-         (<! (e/next-frame))
-         (when (> x-pos 1)
-           (recur (inc fnum)))))
-
-     (<! (e/wait-frames 30))
-
-     ;; Slide out
-     (loop [fnum 0]
-       (let [width (.-innerWidth js/window)
-             height (.-innerHeight js/window)
-             x-pos  (- 0  (Math/pow 1.1 fnum))]
-         (s/set-x! text x-pos)
-
-         (when (= fnum 20) (sound/play-sound :text-depart 0.5 false))
-
-         (<! (e/next-frame))
-         (when (> x-pos -1000)
-           (recur (inc fnum))))))))
 
 (defn instructions-thread []
   (go-while (not (state/playing?))
     (let [instructions ["Press any button to play" "Pull some sik flips" "Do not sink your dingy"]]
       (loop [strings (cycle instructions)]
-        (<! (slide-text (first strings)))
+        (<! (text/slide-text (first strings) true #(not (state/playing?)) :ui 150 30 1))
         (recur (rest strings))))))
 
 (defn titlescreen-thread [tidal upsurge]
@@ -137,7 +104,7 @@
            {:keys [amp freq phase]} wave
 
            xpos (+ level-x phase)
-           
+
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
            tidal-y-pos (wave/wave-y-position width height amp freq xpos -200)
