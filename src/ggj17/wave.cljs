@@ -39,6 +39,8 @@ uniform float height;
 uniform float seaHue;
 uniform float skyHue;
 
+uniform float levelx;
+
 float rand(vec2 co){
   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
@@ -53,7 +55,8 @@ vec3 hsv2rgb (vec3 c)
 void main()
 {
   float x = vTextureCoord.x * width - (width/2.0);
-  float topWave =  abs(0.02 * (sin(freq * 20.0 * x)));
+  float adj_levelx = levelx * width - (width/2.0);
+  float topWave =  abs(0.02 * (sin(freq * 20.0 * x + (levelx / 10.0))));
   float y = ((amp * sin(freq * (x + phase))) + (height/2.0)) / height;
   if (vTextureCoord.y < (y + topWave))
   {
@@ -90,6 +93,7 @@ void main()
   (set! (.-uniforms.phase.value shader) phase)
   (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
   (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
+  (set! (.-uniforms.levelx.value shader) (:level-x @state/state))
   )
 
 (defn wave-line [resolution]
@@ -102,6 +106,7 @@ void main()
         "phase" #js {"type" "1f" "value" 0.0}
         "width" #js {"type" "1f" "value" 300}
         "height" #js {"type" "1f" "value" 300}
+        "levelx" #js {"type" "1f" "value" 0}
 
         "skyHue" #js {"type" "1f" "value" 0.65}
         "seaHue" #js {"type" "1f" "value" 0.65}

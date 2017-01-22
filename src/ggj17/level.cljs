@@ -14,8 +14,23 @@
   (go-while
    (state/playing?)
    (loop [fnum 0]
-     (state/set-amp! 150 ;(/ fnum 20)
-                     )
+     (let [level-x (:level-x @state/state)
+           amp (* 20
+                  (* 2.5 (Math/sin (/ fnum 1820)))
+                  (* 0.9 (Math/sin (/ fnum 355)))
+                  (* 2.5 (Math/sin (/ fnum 2534)))
+                  (* 2 (Math/sin (/ fnum 1456)))
+                  (* 2 (Math/sin (/ fnum 5666))))
+
+           freq (+ 0.005
+                   (* 0.005
+                      (* 2 (Math/abs (Math/sin (/ fnum 65436))))
+                      (* 0.5 (Math/abs (Math/sin (/ fnum 34535))))
+                      (* 3.2 (Math/abs (Math/sin (/ fnum 234234))))
+
+                      ))]                     
+       (state/set-amp! amp)
+       (state/set-freq! freq))
 
      (when (zero? (rem fnum 600))
        (floaty/spawn-floaty! (+ 30 (/ (.-innerWidth js/window) 2))))
