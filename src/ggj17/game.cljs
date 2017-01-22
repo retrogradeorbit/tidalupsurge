@@ -31,10 +31,19 @@
   )
 
 (def gravity (vec2/vec2 0 0.1))
+(def max-speed 20)
 
 (defn dead? []
   (or (e/is-pressed? :esc)
       false))
+
+(defn clamp [val min max]
+  (cond
+    (< val min) min
+    (> val max) max
+    :default val
+    )
+  )
 
 (defn health-display-thread []
   (go-while (state/playing?)
@@ -115,6 +124,7 @@
           heading-delta 0
           last-frame-on-wave? false
           total-delta 0
+          vel-x 1
           ]
      (log "POS" pos)
      (let [
@@ -145,6 +155,7 @@
                             width height amp freq wave-x-pos)
 
            ;; now calculate the vel we pass through to next iter from our changed position
+           
            vel (vec2/sub constrained-pos pos)
 
            old-heading heading
@@ -195,7 +206,7 @@
        (s/set-rotation! player heading)
 
        (swap! state/state
-              update :level-x + (* 5 joy-x))
+              update :level-x + vel-x)
 
        (<! (e/next-frame))
 
@@ -223,6 +234,9 @@
                 (if player-on-wave?
                   0
                   (+ total-delta heading-delta))
+
+                (clamp (+ vel-x (/ joy-x 5)) (- max-speed) max-speed)
+                
                 ))))
    ))
 
