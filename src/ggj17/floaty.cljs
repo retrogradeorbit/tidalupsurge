@@ -14,30 +14,41 @@
                    [infinitelives.pixi.macros :as m]))
 
 (defn setpos [floaty level-x amp freq phase fnum xpos]
-  (let [wave-x-pos (+ phase level-x)]
-    (s/set-pos!
-     floaty
-                                        ;xpos
-     (- xpos (:level-x @state/state))
-     
-     (wave/wave-y-position
-      (.-innerWidth js/window)
-      (.-innerHeight js/window)
-      amp freq wave-x-pos (- xpos wave-x-pos)
-      )))
-  )
+  (let [wave-x-pos (+ phase level-x)
+        new-x (- xpos (:level-x @state/state))
+        new-y (wave/wave-y-position
+               (.-innerWidth js/window)
+               (.-innerHeight js/window)
+               amp freq wave-x-pos (- xpos wave-x-pos)
+               )
+        ]
+    (s/set-pos! floaty new-x new-y)
+    (vec2/vec2 new-x new-y)))
 
-(defn spawn-floaty! [xpos]
+(defn spawn-floaty! [player xpos]
   (let [start-level-x (:level-x @state/state)]
     (go
       (m/with-sprite :player
         [floaty (s/make-sprite :guy :scale 3 :x xpos :y 0)]
         (loop []
           (let [{:keys [wave level-x]} @state/state
-                {:keys [amp freq phase fnum]} wave]
-            (setpos floaty level-x amp freq phase fnum xpos)
-            )
+                {:keys [amp freq phase fnum]} wave
+                new-pos (setpos floaty level-x amp freq phase fnum xpos)]
+            
 
-          (<! (e/next-frame))
-          (when (> (- xpos (:level-x @state/state)) (- (+ 30 (/ (.-innerWidth js/window) 2))))
-            (recur)))))))
+            (<! (e/next-frame))
+            (when (> (- xpos (:level-x @state/state)) (- (+ 30 (/ (.-innerWidth js/window) 2))))
+              ;; not off screen to left
+              (if (<
+                     (vec2/magnitude-squared
+                      (vec2/sub (s/get-pos player)
+                                (s/get-pos floaty)))
+                     200)
+                ;; dude hit
+                (do
+                  (s/set-texture! floaty splat)
+                  (<! (e/wait-frames 100)))
+                
+
+                ;; dude not hit
+                (recur)))))))))

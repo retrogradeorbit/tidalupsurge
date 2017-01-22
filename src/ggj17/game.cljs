@@ -125,7 +125,7 @@
 
    (health-display-thread)
    (score-display-thread)
-   (level/level-thread)
+   (level/level-thread player)
 
    (sound/play-sound :game-start 0.5 false)
 
@@ -220,11 +220,16 @@
        (s/set-rotation! player heading)
 
        (swap! state/state
-              update :level-x + vel-x)
+              #(-> %
+                   (update :level-x + vel-x)
+                   (assoc :global-pos
+                          (vec2/vec2 level-x
+                                     (vec2/get-y pos)))
+                   (assoc :pos pos)))
 
        (<! (e/next-frame))
 
-       (js/console.log "health: " (state/get-health) )
+;       (js/console.log "health: " (state/get-health) )
 
        (if (<= (state/get-health) 0)
          ;; die
