@@ -14,7 +14,8 @@
   (go-while
    (state/playing?)
    (loop [fnum 0]
-     (state/set-amp! (/ fnum 20))
+     (state/set-amp! 150 ;(/ fnum 20)
+                     )
 
      (when (zero? (rem fnum 600))
        (floaty/spawn-floaty! (+ 30 (/ (.-innerWidth js/window) 2))))

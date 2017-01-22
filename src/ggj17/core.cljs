@@ -66,14 +66,6 @@
     (.generateTexture bg false)))
 
 
-(defn set-shader-uniforms [shader fnum amp freq phase]
-  (set! (.-uniforms.amp.value shader) amp)
-  (set! (.-uniforms.freq.value shader) freq)
-  (set! (.-uniforms.phase.value shader) phase)
-  (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
-  (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
-  )
-
 (defn set-texture-filter [texture filter]
   (set! (.-filters texture) (make-array filter)))
 
@@ -84,27 +76,6 @@
    (gp/button-pressed? 0 :b)
    (gp/button-pressed? 0 :x)
    (gp/button-pressed? 0 :y)))
-
-
-(defn update-background [shader fnum amp freq phase width height]
-  (set-shader-uniforms shader fnum amp freq phase))
-
-
-(defn wave-update-thread [shader]
-  (go
-    (loop [fnum 0]
-      (let [{:keys [level-x wave]} @state/state
-            {:keys [amp freq phase]} wave]
-        (update-background shader fnum amp freq (+ level-x phase)
-                           (.-innerWidth js/window)
-                           (.-innerHeight js/window))
-        (swap! state/state
-               #(-> %
-                    (assoc-in [:wave :fnum] fnum)
-                    (assoc-in [:level-x] (/ fnum 15)))
-               )
-        (<! (e/next-frame))
-        (recur (inc fnum))))))
 
 (defn slide-text [text-string]
   (go-while
@@ -225,7 +196,7 @@
 
           (set-texture-filter bg shader)
 
-          (wave-update-thread shader)
+          (wave/wave-update-thread shader)
           (game/health-display-thread)
 
           (while true

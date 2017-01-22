@@ -107,6 +107,7 @@
           last-frame-on-wave? false
           total-delta 0
           ]
+     (log "POS" pos)
      (let [
            {:keys [wave level-x]} @state/state
            {:keys [amp freq phase]} wave
@@ -122,20 +123,26 @@
            half-width (/ (.-innerHeight js/window) 2)
 
            vel (vec2/add vel gravity)
+
+;           pos2 (vec2/sub pos (vec2/vec2 level-x 0))
            pos2 (vec2/add pos vel)
 
            player-on-wave? (wave/on-wave? pos2 width height amp freq wave-x-pos)
 
            pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?)) jump-vec (vec2/zero)))
 
-           constrained-pos (wave/constrain-pos pos2 width height amp freq wave-x-pos)
+           constrained-pos (wave/constrain-pos
+                            pos2
+                            width height amp freq wave-x-pos)
 
            ;; now calculate the vel we pass through to next iter from our changed position
            vel (vec2/sub constrained-pos pos)
 
            old-heading heading
            heading (if player-on-wave?
-                     (wave/wave-theta width height amp freq wave-x-pos (vec2/get-x pos2))
+                     (wave/wave-theta width height amp freq 0 ;wave-x-pos
+                                      (- (/ (vec2/get-x pos2) 2) level-x)
+                                      )
                      (+ heading heading-delta))
 
            heading-delta (if player-on-wave?
@@ -172,12 +179,15 @@
 
              ))
 
-       (s/set-pos! player constrained-pos)
+       (s/set-pos! player 0 (vec2/get-y constrained-pos))
        (s/set-rotation! player heading)
+
+       (swap! state/state
+              update :level-x + (* 5 joy-x))
 
        (<! (e/next-frame))
 
-       (if (<= (:health @state/state) 0)
+       (if false ;(<= (:health @state/state) 0)
          ;; die
          (do
            (explosion/explosion player)

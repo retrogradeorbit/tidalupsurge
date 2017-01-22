@@ -13,8 +13,8 @@
             [infinitelives.utils.sound :as sound]
 
             [ggj17.assets :as assets]
-            [ggj17.explosion :as explosion]
-            [ggj17.state :as state])
+            [ggj17.state :as state]
+            [ggj17.explosion :as explosion])
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
                    [ggj17.async :refer [go-while go-until-reload]]
@@ -45,7 +45,8 @@ vec3 hsv2rgb (vec3 c)
 void main()
 {
   float x = vTextureCoord.x * width - (width/2.0);
-  float y = ((amp * sin(freq * x + phase)) + (height/2.0)) / height;
+  // float phase-x = phase * width - (width/2.0);
+  float y = ((amp * sin(freq * (x + phase))) + (height/2.0)) / height;
   if (vTextureCoord.y < y)
   {
     gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
@@ -64,15 +65,24 @@ void main()
   (*
      amp
      (Math/sin
-         (+ phase
-            (* freq x)))))
+      (+
+       0
+       (* freq (+ phase x))))))
 
 (defn wave-theta [width height amp freq phase x]
   (* 0.7
      (Math/atan
       (Math/cos
        (+ phase
-          (* freq x))))))
+          (* freq (+ phase x)))))))
+
+(defn set-shader-uniforms [shader amp freq phase]
+  (set! (.-uniforms.amp.value shader) amp)
+  (set! (.-uniforms.freq.value shader) freq)
+  (set! (.-uniforms.phase.value shader) phase)
+  (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
+  (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
+  )
 
 (defn wave-line [resolution]
   (js/PIXI.AbstractFilter.
@@ -90,10 +100,38 @@ void main()
 
 (defn on-wave? [pos width height amp freq phase]
   (let [[x y] (vec2/as-vector pos)
+        x (/ x 2)
         wave-y (wave-y-position width height amp freq phase x)]
     (>= y wave-y)))
 
 (defn constrain-pos [pos width height amp freq phase]
   (let [[x y] (vec2/as-vector pos)
+        x (/ x 2)
         wave-y (wave-y-position width height amp freq phase x)]
-    (vec2/vec2 x (if (on-wave? pos width height amp freq phase) wave-y y))))
+    (vec2/vec2 x (if (on-wave? pos width height amp freq phase)
+                   wave-y
+                   y))))
+
+(defn update-background [shader fnum amp freq phase width height]
+  (log "update-background:" amp freq phase)
+  (set-shader-uniforms shader amp freq phase))
+
+
+(defn update-wave [shader fnum level-x amp freq phase]
+  (update-background shader fnum amp freq (+ level-x phase)
+                     (.-innerWidth js/window)
+                     (.-innerHeight js/window))
+  (swap! state/state
+         #(-> %
+              (assoc-in [:wave :fnum] fnum)
+                                        ;(assoc-in [:level-x] (/ fnum 15))
+              )))
+
+(defn wave-update-thread [shader]
+  (go
+    (loop [fnum 0]
+      (let [{:keys [level-x wave]} @state/state
+            {:keys [amp freq phase]} wave]
+        (update-wave shader fnum level-x amp freq phase)
+        (<! (e/next-frame))
+        (recur (inc fnum))))))
