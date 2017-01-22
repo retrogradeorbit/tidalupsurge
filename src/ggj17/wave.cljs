@@ -14,14 +14,7 @@
 
             [ggj17.assets :as assets]
             [ggj17.explosion :as explosion]
-            [ggj17.state :as state]
-            [ggj17.level :as level]
-            [ggj17.clouds :as clouds]
-            [ggj17.popup :as popup]
-            [ggj17.floaty :as floaty]
-            
-            
-            )
+            [ggj17.state :as state])
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
                    [ggj17.async :refer [go-while go-until-reload]]

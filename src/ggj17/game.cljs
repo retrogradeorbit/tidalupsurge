@@ -115,6 +115,7 @@
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
 
+          
            joy (get-player-input-vec2)
            joy-x (vec2/get-x joy)
            joy-y (vec2/get-y joy)
