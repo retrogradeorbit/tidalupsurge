@@ -21,6 +21,7 @@
             [ggj17.floaty :as floaty]
             [ggj17.wave :as wave]
             [ggj17.consts :as consts]
+            [ggj17.splash :as splash]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -87,6 +88,14 @@
 
 (def jump-vec (vec2/vec2 0 -5))
 
+;(def reset-hue []
+  ;(go
+    ;(loop []
+
+      ;(state/set-sky-colour)
+      ;)
+    ;))
+
 (defn player-thread [player]
   (go-while
    (not (dead?))
@@ -116,7 +125,7 @@
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
 
-          
+
            joy (get-player-input-vec2)
            joy-x (vec2/get-x joy)
            joy-y (vec2/get-y joy)
@@ -156,6 +165,9 @@
 
        ;; landing
        (when (and (not last-frame-on-wave?) player-on-wave?)
+
+         (splash/splash player)
+
          (let [flips (int (/ total-delta (* 2 Math/PI)))
                heading-diff (Math/abs (- heading old-heading))]
            (when (> heading-diff 0.5)
@@ -190,6 +202,7 @@
        (if false ;(<= (:health @state/state) 0)
          ;; die
          (do
+           ;(reset-hue)
            (explosion/explosion player)
            (sound/play-sound :boom1 0.5 false)
            (<! (e/wait-frames 100))

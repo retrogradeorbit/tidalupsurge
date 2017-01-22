@@ -1,3 +1,4 @@
+
 (ns ggj17.wave
   (:require [infinitelives.pixi.canvas :as c]
             [infinitelives.pixi.resources :as r]
@@ -35,26 +36,33 @@ uniform float phase;
 uniform float width;
 uniform float height;
 
+uniform float seaHue;
+uniform float skyHue;
+
+float rand(vec2 co){
+  return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
 vec3 hsv2rgb (vec3 c)
-    {
-      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-    }
+{
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
 
 void main()
 {
   float x = vTextureCoord.x * width - (width/2.0);
-  // float phase-x = phase * width - (width/2.0);
+  float topWave =  abs(0.02 * (sin(freq * 20.0 * x)));
   float y = ((amp * sin(freq * (x + phase))) + (height/2.0)) / height;
-  if (vTextureCoord.y < y)
+  if (vTextureCoord.y < (y + topWave))
   {
-    gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
+    gl_FragColor = vec4(hsv2rgb(vec3(skyHue, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
   }
   else
   {
     // More green, less blue as we get to the bottom
-    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.1, 1.0 - vTextureCoord.y, 1.0);
+    gl_FragColor = vec4(hsv2rgb(vec3(seaHue, 1.0, (1.0 - vTextureCoord.y))), 1.0);
   }
 }
 "
@@ -94,6 +102,9 @@ void main()
         "phase" #js {"type" "1f" "value" 0.0}
         "width" #js {"type" "1f" "value" 300}
         "height" #js {"type" "1f" "value" 300}
+
+        "skyHue" #js {"type" "1f" "value" 0.65}
+        "seaHue" #js {"type" "1f" "value" 0.65}
 
         }))
 

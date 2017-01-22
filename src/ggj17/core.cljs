@@ -21,6 +21,7 @@
             [ggj17.floaty :as floaty]
             [ggj17.game :as game]
             [ggj17.wave :as wave]
+            [ggj17.splash :as splash]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -64,6 +65,11 @@
       (.drawRect 0 0 32 32)
       .endFill)
     (.generateTexture bg false)))
+
+(defn update-colours [shader sky-hue sea-hue]
+  (set! (.-uniforms.skyHue.value shader) sky-hue)
+  (set! (.-uniforms.seaHue.value shader) sea-hue)
+  )
 
 
 (defn set-texture-filter [texture filter]
