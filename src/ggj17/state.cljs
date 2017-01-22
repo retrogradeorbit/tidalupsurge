@@ -26,6 +26,9 @@
 (defn set-amp! [amp]
   (swap! state assoc-in [:wave :amp] amp))
 
+(defn set-freq! [freq]
+  (swap! state assoc-in [:wave :freq] freq))
+
 (defn get-sky-hue []
   (get-in @state [:colours :sky-hue]))
 
