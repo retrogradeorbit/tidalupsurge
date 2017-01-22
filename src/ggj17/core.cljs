@@ -19,6 +19,8 @@
             [ggj17.clouds :as clouds]
             [ggj17.popup :as popup]
             [ggj17.floaty :as floaty]
+            [ggj17.game :as game]
+            [ggj17.wave :as wave]
             )
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]
@@ -27,117 +29,6 @@
                    ))
 
 (enable-console-print!)
-
-(def gravity (vec2/vec2 0 0.1))
-
-(def fragment-shader-glsl
-
-  "
-
-precision mediump float;
-varying vec2 vTextureCoord;
-varying vec4 vColor;
-
-uniform float amp;
-uniform float freq;
-uniform float phase;
-uniform float width;
-uniform float height;
-
-vec3 hsv2rgb (vec3 c)
-    {
-      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-    }
-
-void main()
-{
-  float x = vTextureCoord.x * width - (width/2.0);
-  float y = ((amp * sin(freq * x + phase)) + (height/2.0)) / height;
-  if (vTextureCoord.y < y)
-  {
-    gl_FragColor = vec4(hsv2rgb(vec3(0.65, (1.0 - vTextureCoord.y) * 0.5, 1.0)), 1.0);
-  }
-  else
-  {
-    // More green, less blue as we get to the bottom
-    gl_FragColor = vec4(0.0, vTextureCoord.y * 0.1, 1.0 - vTextureCoord.y, 1.0);
-  }
-}
-"
-  )
-
-(def flip-text
-  {
-   -3 ["sick triple backflip!"]
-   -2 ["double backflip"]
-   -1 ["backward flip!"
-       "reverse roll"
-       "do a barrel roll"
-       "backflip"]
-   0 ["jump landed"
-      "splash down"]
-   1 ["sick flip bro!"
-      "a full flip"
-      "forward roll"]
-   2 ["double flip!"
-      "720!"
-      "double forward roll"]
-   3 ["triple flippage"
-      "three full loops"
-      "you're a loop master"]
-   })
-
-(def flip-score
-  {
-   -3 500
-   -2 200
-   -1 50
-   0 5
-   1 50
-   2 200
-   3 500
-   })
-
-(def flip-sfx
-  {
-   -3 :land1
-   -2 :land1
-   -1 :land1
-   1 :land1
-   2 :land1
-   3 :land1
-   })
-
-(defn wave-y-position [width height amp freq phase x]
-
-  (*
-     amp
-     (Math/sin
-         (+ phase
-            (* freq x)))))
-
-(defn wave-theta [width height amp freq phase x]
-  (* 0.7
-     (Math/atan
-      (Math/cos
-       (+ phase
-          (* freq x))))))
-
-(defn wave-line [resolution]
-  (js/PIXI.AbstractFilter.
-   nil
-   #js [fragment-shader-glsl]
-   #js {
-        "amp" #js {"type" "1f" "value" 100.0}
-        "freq" #js {"type" "1f" "value" 100.0}
-        "phase" #js {"type" "1f" "value" 0.0}
-        "width" #js {"type" "1f" "value" 300}
-        "height" #js {"type" "1f" "value" 300}
-
-        }))
-
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
@@ -185,16 +76,6 @@ void main()
 (defn set-texture-filter [texture filter]
   (set! (.-filters texture) (make-array filter)))
 
-(defn get-player-input-vec2 []
-  (vec2/vec2 (or (gp/axis 0)
-                 (cond (e/is-pressed? :left) -1
-                       (e/is-pressed? :right) 1
-                       :default 0) )
-             (or (gp/axis 1)
-                 (cond (e/is-pressed? :up) -1
-                       (e/is-pressed? :down) 1
-                       :default 0))))
-
 (defn start-pressed? []
   (or
    (e/is-pressed? :space)
@@ -203,16 +84,6 @@ void main()
    (gp/button-pressed? 0 :x)
    (gp/button-pressed? 0 :y)))
 
-
-(defn on-wave? [pos width height amp freq phase]
-  (let [[x y] (vec2/as-vector pos)
-        wave-y (wave-y-position width height amp freq phase x)]
-    (>= y wave-y)))
-
-(defn constrain-pos [pos width height amp freq phase]
-  (let [[x y] (vec2/as-vector pos)
-        wave-y (wave-y-position width height amp freq phase x)]
-    (vec2/vec2 x (if (on-wave? pos width height amp freq phase) wave-y y))))
 
 (defn update-background [shader fnum amp freq phase width height]
   (set-shader-uniforms shader fnum amp freq phase)
@@ -235,165 +106,6 @@ void main()
                )
         (<! (e/next-frame))
         (recur (inc fnum))))))
-
-(defn health-display-thread []
-  (go-while (state/playing?)
-    (m/with-sprite :damage
-      [health-text (pf/make-text :small (->> @state/state :health int (str "hull "))
-                                 :scale 3
-                                 :x -110 :y -20)]
-      (loop [health (:health @state/state)]
-        (<! (e/next-frame))
-        (let [new-health (:health @state/state)]
-          (when (not= new-health health)
-            (.removeChildren health-text)
-            (pf/change-text! health-text :small (str "hull " (int new-health))))
-          (recur new-health)))))
-  )
-
-(defn score-display-thread []
-  (go-while (state/playing?)
-    (m/with-sprite :score
-      [score-text (pf/make-text :small (->> @state/state :score int str)
-                                 :scale 5
-                                 :x 30 :y -30)]
-      (loop [score (:score @state/state)]
-        (<! (e/next-frame))
-        (let [new-score (:score @state/state)]
-          (when (not= new-score score)
-            (.removeChildren score-text)
-            (pf/change-text! score-text :small (str (int new-score))))
-          (recur new-score)))))
-  )
-
-(defn dead? []
-  (or (e/is-pressed? :esc)
-      false))
-
-(defn jump-pressed? []
-  (or
-   (e/is-pressed? :space)
-   (gp/button-pressed? 0 :a)
-   (gp/button-pressed? 0 :b)
-   (gp/button-pressed? 0 :x)
-   (gp/button-pressed? 0 :y)))
-
-(def jump-vec (vec2/vec2 0 -5))
-
-(defn player-thread [player]
-  (go-while
-   (not (dead?))
-   (state/set-amp! 1)
-   (state/start-game!)
-
-   (health-display-thread)
-   (score-display-thread)
-   (level/level-thread)
-
-   (sound/play-sound :game-start 0.5 false)
-
-   (loop [fnum 0
-          pos (vec2/vec2 0 0)
-          vel (vec2/vec2 0 0)
-          heading 0
-          heading-delta 0
-          last-frame-on-wave? false
-          total-delta 0
-          ]
-     (let [
-           {:keys [wave level-x]} @state/state
-           {:keys [amp freq phase]} wave
-           wave-x-pos (+ level-x phase)
-
-           height (.-innerHeight js/window)
-           width (.-innerWidth js/window)
-
-           joy (get-player-input-vec2)
-           joy-x (vec2/get-x joy)
-           joy-y (vec2/get-y joy)
-           half-width (/ (.-innerHeight js/window) 2)
-
-           vel (vec2/add vel gravity)
-           pos2 (vec2/add pos vel)
-
-           player-on-wave? (on-wave? pos2 width height amp freq wave-x-pos)
-
-           pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?)) jump-vec (vec2/zero)))
-
-           constrained-pos (constrain-pos pos2 width height amp freq wave-x-pos)
-
-           ;; now calculate the vel we pass through to next iter from our changed position
-           vel (vec2/sub constrained-pos pos)
-
-           old-heading heading
-           heading (if player-on-wave?
-                     (wave-theta width height amp freq wave-x-pos (vec2/get-x pos2))
-                     (+ heading heading-delta))
-
-           heading-delta (if player-on-wave?
-                           0
-                           (+ heading-delta (* joy-y 0.01)))
-           ;; damped heading delta back to 0
-           heading-delta (if (neg? heading-delta)
-                           (min 0 (+ heading-delta 0.001))
-                           (max 0 (- heading-delta 0.001)))
-           ]
-
-       ;; landing
-       (when (and (not last-frame-on-wave?) player-on-wave?)
-         (let [flips (int (/ total-delta (* 2 Math/PI)))
-               heading-diff (Math/abs (- heading old-heading))]
-           (when (> heading-diff 0.5)
-             (state/sub-damage! (* heading-diff 3)))
-
-           ;; if landed and alive, popup
-           (when (pos? (:health @state/state))
-
-             (popup/popup! (vec2/add pos2 (vec2/vec2 0 -30))
-                           (rand-nth (flip-text flips))
-                           200)
-
-             (sound/play-sound :splash1 0.3 false)
-
-             (when-let [sfx (flip-sfx flips)]
-               (sound/play-sound sfx 0.5 false))
-
-             (state/add-score! (flip-score flips))
-             )
-
-
-             ))
-
-       (s/set-pos! player constrained-pos)
-       (s/set-rotation! player heading)
-
-       (<! (e/next-frame))
-
-       (if (<= (:health @state/state) 0)
-         ;; die
-         (do
-           (explosion/explosion player)
-           (sound/play-sound :boom1 0.5 false)
-           (<! (e/wait-frames 100))
-           (m/with-sprite :ui
-             [gameover (pf/make-text :small "Game Over" :scale 7)]
-             (sound/play-sound :gameover 0.5 false)
-             (<! (e/wait-frames 300)))
-           (state/die!))
-
-         ;; still living
-         (recur (inc fnum)
-                (vec2/add constrained-pos joy)
-                vel
-                heading
-                heading-delta
-                player-on-wave?
-
-                (if player-on-wave?
-                  0
-                  (+ total-delta heading-delta))
-                ))))
-   ))
 
 (defn slide-text [text-string]
   (go-while
@@ -452,11 +164,11 @@ void main()
            
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
-           tidal-y-pos (wave-y-position width height amp freq xpos -200)
-           tidal-heading (wave-theta width height amp freq xpos -200)
+           tidal-y-pos (wave/wave-y-position width height amp freq xpos -200)
+           tidal-heading (wave/wave-theta width height amp freq xpos -200)
 
-           upsurge-y-pos (wave-y-position width height amp freq xpos 200)
-           upsurge-heading (wave-theta width height amp freq xpos 200)
+           upsurge-y-pos (wave/wave-y-position width height amp freq xpos 200)
+           upsurge-heading (wave/wave-theta width height amp freq xpos 200)
            ]
 
        (s/set-pos! tidal -200 (+ tidal-y-pos -30))
@@ -510,12 +222,12 @@ void main()
         (clouds/cloud-thread cloudset)
         (js/console.log "cloudset" (str cloudset))
 
-        (let [shader (wave-line [1 1])]
+        (let [shader (wave/wave-line [1 1])]
 
           (set-texture-filter bg shader)
 
           (wave-update-thread shader)
-          (health-display-thread)
+          (game/health-display-thread)
 
           (while true
             (s/set-visible! player false)
@@ -526,5 +238,5 @@ void main()
             (s/set-visible! upsurge false)
             (s/set-visible! tidal false)
             (s/set-visible! player true)
-            (<! (player-thread player)))
+            (<! (game/player-thread player)))
           )))))
