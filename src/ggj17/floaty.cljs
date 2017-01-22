@@ -46,7 +46,7 @@
                      200)
                 ;; dude hit
                 (do
-                  (s/set-texture! floaty splat)
+                  (s/set-texture! floaty :splat)
                   (<! (e/wait-frames 100)))
                 
 
