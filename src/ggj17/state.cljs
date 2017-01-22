@@ -10,7 +10,8 @@
      :fnum 0}
 
     :pos (vec2/vec2 0 0)
-
+    :level-x 0
+    
     :health 100.0
     :score 0
     })

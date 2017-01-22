@@ -32,13 +32,15 @@
       [floaty (s/make-sprite :guy :scale 3 :x xpos :y 0)]
       (loop [xpos xpos]
 
-        (let [{:keys [amp freq phase fnum]} (:wave @state/state)]
+        (let [{:keys [wave level-x]} @state/state
+              {:keys [amp freq phase fnum]} wave
+              wave-x-pos (+ phase level-x)]
           (s/set-pos!
            floaty
            xpos (wave-y-position
                  (.-innerWidth js/window)
                  (.-innerHeight js/window)
-                 amp freq phase xpos)))
-        
+                 amp freq wave-x-pos xpos)))
+
         (<! (e/next-frame))
         (when (> xpos (- (+ 30 (/ (.-innerWidth js/window) 2)))) (recur (- xpos 3)))))))

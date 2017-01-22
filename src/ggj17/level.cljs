@@ -18,6 +18,6 @@
 
      (when (zero? (rem fnum 600))
        (floaty/spawn-floaty! (+ 30 (/ (.-innerWidth js/window) 2))))
-     
+
      (<! (e/next-frame))
      (recur (inc fnum)))))
