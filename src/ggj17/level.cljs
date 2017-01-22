@@ -11,8 +11,7 @@
                    ))
 
 (defn level-thread []
-  (go-while
-   (state/playing?)
+  (go
    (loop [fnum 0]
      (let [level-x (:level-x @state/state)
            amp (* 20
@@ -30,10 +29,17 @@
 
                       ))]                     
        (state/set-amp! amp)
-       (state/set-freq! freq))
+       (state/set-freq! freq)
 
-     (when (zero? (rem fnum 600))
-       (floaty/spawn-floaty! (+ 30 (/ (.-innerWidth js/window) 2))))
+       (when
+           (or
+            (zero? (dec (rem (int level-x) 300)))
+            (zero? (dec (rem (int level-x) 555)))
+            (zero? (dec (rem (int level-x) 2432)))
+            (zero? (dec (rem (int level-x) 1234)))
+            )
+         (floaty/spawn-floaty! (+ level-x 30 (/ (.-innerWidth js/window) 2))))
 
-     (<! (e/next-frame))
-     (recur (inc fnum)))))
+       (<! (e/next-frame))
+       (when (state/playing?)
+         (recur (inc fnum)))))))

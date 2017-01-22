@@ -134,7 +134,7 @@
           total-delta 0
           vel-x 0
           ]
-     (log "POS" pos)
+                                        ;     (log "POS" pos)
      (let [
            {:keys [wave level-x]} @state/state
            {:keys [amp freq phase]} wave
