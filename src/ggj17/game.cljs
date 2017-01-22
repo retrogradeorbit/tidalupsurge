@@ -224,8 +224,9 @@
 
        (<! (e/next-frame))
 
-       (if false ;(<= (:health @state/state) 0)
+       (if (<= (state/get-health) 0)
          ;; die
+         (state/set-health! 0)
          (do
            (reset-hue)
            (explosion/explosion player)

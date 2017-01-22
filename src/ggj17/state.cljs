@@ -48,6 +48,9 @@
 (defn set-health [state health]
   (assoc state :health health))
 
+(defn get-health []
+  (:health @state))
+
 (defn set-health! [health]
   (swap! state set-health health))
 
