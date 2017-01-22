@@ -66,15 +66,6 @@
       .endFill)
     (.generateTexture bg false)))
 
-
-(defn set-shader-uniforms [shader fnum amp freq phase]
-  (set! (.-uniforms.amp.value shader) amp)
-  (set! (.-uniforms.freq.value shader) freq)
-  (set! (.-uniforms.phase.value shader) phase)
-  (set! (.-uniforms.width.value shader) (.-innerWidth js/window))
-  (set! (.-uniforms.height.value shader) (.-innerHeight js/window))
-  )
-
 (defn update-colours [shader sky-hue sea-hue]
   (set! (.-uniforms.skyHue.value shader) sky-hue)
   (set! (.-uniforms.seaHue.value shader) sea-hue)
@@ -91,32 +82,6 @@
    (gp/button-pressed? 0 :b)
    (gp/button-pressed? 0 :x)
    (gp/button-pressed? 0 :y)))
-
-
-(defn update-background [shader fnum amp freq phase width height]
-  (set-shader-uniforms shader fnum amp freq phase))
-
-
-(defn wave-update-thread [shader]
-  (go
-    (loop [fnum 0]
-      (let [{:keys [colours level-x wave]} @state/state
-            {:keys [amp freq phase]} wave
-            {:keys [sky-hue sea-hue]} colours]
-        (update-background shader fnum amp freq (+ level-x phase)
-                           (.-innerWidth js/window)
-                           (.-innerHeight js/window))
-        (update-colours shader sky-hue sea-hue)
-
-        (swap! state/state
-               #(-> %
-                    (assoc-in [:colours :sky-hue] (+ (state/get-sky-hue) 0.0001))
-                    (assoc-in [:colours :sea-hue] (+ (state/get-sea-hue) 0.0001))
-                    (assoc-in [:wave :fnum] fnum)
-                    (assoc-in [:level-x] (/ fnum 15)))
-               )
-        (<! (e/next-frame))
-        (recur (inc fnum))))))
 
 (defn slide-text [text-string]
   (go-while
@@ -172,7 +137,7 @@
            {:keys [amp freq phase]} wave
 
            xpos (+ level-x phase)
-
+           
            height (.-innerHeight js/window)
            width (.-innerWidth js/window)
            tidal-y-pos (wave/wave-y-position width height amp freq xpos -200)
@@ -231,13 +196,12 @@
       (m/with-sprite-set :clouds
         [cloudset (clouds/get-sprites)]
         (clouds/cloud-thread cloudset)
-        (js/console.log "cloudset" (str cloudset))
 
         (let [shader (wave/wave-line [1 1])]
 
           (set-texture-filter bg shader)
 
-          (wave-update-thread shader)
+          (wave/wave-update-thread shader)
           (game/health-display-thread)
 
           (while true

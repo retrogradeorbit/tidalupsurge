@@ -31,10 +31,19 @@
   )
 
 (def gravity (vec2/vec2 0 0.1))
+(def max-speed 10)
 
 (defn dead? []
   (or (e/is-pressed? :esc)
       false))
+
+(defn clamp [val min max]
+  (cond
+    (< val min) min
+    (> val max) max
+    :default val
+    )
+  )
 
 (defn health-display-thread []
   (go-while (state/playing?)
@@ -123,7 +132,9 @@
           heading-delta 0
           last-frame-on-wave? false
           total-delta 0
+          vel-x 1
           ]
+     (log "POS" pos)
      (let [
            {:keys [wave level-x]} @state/state
            {:keys [amp freq phase]} wave
@@ -139,20 +150,27 @@
            half-width (/ (.-innerHeight js/window) 2)
 
            vel (vec2/add vel gravity)
+
+;           pos2 (vec2/sub pos (vec2/vec2 level-x 0))
            pos2 (vec2/add pos vel)
 
            player-on-wave? (wave/on-wave? pos2 width height amp freq wave-x-pos)
 
            pos2 (vec2/add pos2 (if (and player-on-wave? (jump-pressed?)) jump-vec (vec2/zero)))
 
-           constrained-pos (wave/constrain-pos pos2 width height amp freq wave-x-pos)
+           constrained-pos (wave/constrain-pos
+                            pos2
+                            width height amp freq wave-x-pos)
 
            ;; now calculate the vel we pass through to next iter from our changed position
+           
            vel (vec2/sub constrained-pos pos)
 
            old-heading heading
            heading (if player-on-wave?
-                     (wave/wave-theta width height amp freq wave-x-pos (vec2/get-x pos2))
+                     (wave/wave-theta width height amp freq 0 ;wave-x-pos
+                                      (- (/ (vec2/get-x pos2) 2) level-x)
+                                      )
                      (+ heading heading-delta))
 
            heading-delta (if player-on-wave?
@@ -167,7 +185,7 @@
        ;; landing
        (when (and (not last-frame-on-wave?) player-on-wave?)
 
-         (splash/splash player)
+         (splash/splash (vec2/vec2 level-x (vec2/get-y pos)))
 
          (let [flips (int (/ total-delta (* 2 Math/PI)))
                heading-diff (Math/abs (- heading old-heading))]
@@ -192,12 +210,15 @@
 
              ))
 
-       (s/set-pos! player constrained-pos)
+       (s/set-pos! player 0 (vec2/get-y constrained-pos))
        (s/set-rotation! player heading)
+
+       (swap! state/state
+              update :level-x + vel-x)
 
        (<! (e/next-frame))
 
-       (if (<= (:health @state/state) 0)
+       (if false ;(<= (:health @state/state) 0)
          ;; die
          (do
            (reset-hue)
@@ -221,6 +242,9 @@
                 (if player-on-wave?
                   0
                   (+ total-delta heading-delta))
+
+                (clamp (+ vel-x (/ joy-x 5)) (- max-speed) max-speed)
+                
                 ))))
    ))
 

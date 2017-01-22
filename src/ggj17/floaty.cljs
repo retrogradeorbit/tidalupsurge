@@ -13,21 +13,31 @@
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [infinitelives.pixi.macros :as m]))
 
+(defn setpos [floaty level-x amp freq phase fnum xpos]
+  (let [wave-x-pos (+ phase level-x)]
+    (s/set-pos!
+     floaty
+                                        ;xpos
+     (- xpos (:level-x @state/state))
+     
+     (wave/wave-y-position
+      (.-innerWidth js/window)
+      (.-innerHeight js/window)
+      amp freq wave-x-pos (- xpos wave-x-pos)
+      )))
+  )
+
 (defn spawn-floaty! [xpos]
-  (go
-    (m/with-sprite :player
-      [floaty (s/make-sprite :guy :scale 3 :x xpos :y 0)]
-      (loop [xpos xpos]
+  (let [start-level-x (:level-x @state/state)]
+    (go
+      (m/with-sprite :player
+        [floaty (s/make-sprite :guy :scale 3 :x xpos :y 0)]
+        (loop []
+          (let [{:keys [wave level-x]} @state/state
+                {:keys [amp freq phase fnum]} wave]
+            (setpos floaty level-x amp freq phase fnum xpos)
+            )
 
-        (let [{:keys [wave level-x]} @state/state
-              {:keys [amp freq phase fnum]} wave
-              wave-x-pos (+ phase level-x)]
-          (s/set-pos!
-           floaty
-           xpos (wave/wave-y-position
-                 (.-innerWidth js/window)
-                 (.-innerHeight js/window)
-                 amp freq wave-x-pos xpos)))
-
-        (<! (e/next-frame))
-        (when (> xpos (- (+ 30 (/ (.-innerWidth js/window) 2)))) (recur (- xpos 3)))))))
+          (<! (e/next-frame))
+          (when (> (- xpos (:level-x @state/state)) (- (+ 30 (/ (.-innerWidth js/window) 2))))
+            (recur)))))))
