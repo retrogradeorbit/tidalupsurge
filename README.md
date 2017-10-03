@@ -1,10 +1,14 @@
-# ggj17
+# Tidal Upsurge
 
-FIXME: Write a one-line description of your library/project.
+Game developed in 48 hours for 2017 Global Game Jam.
+
+[PLAY IT NOW!](https://retrogradeorbit.github.io/ggj17/)
+
+![Title screen](./screenshot.png)
 
 ## Overview
 
-FIXME: Write a paragraph about the library/project and highlight its goals.
+Speed your boat along the waves (left and right arrow keys or left and right on the game controller). Jump over the swimmers to avoid hull damage and jump off the waves (controller button, space or z key) and pull sick tricks (up and down while airborne). Points awarded for landing flips. To land a trick without hull damage, the hull of your boat should align with the surface of the water when you land. Too much hull damage and your boat will explode! 
 
 ## Setup
 
@@ -34,6 +38,6 @@ get live reloading, nor a REPL.
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2017 FIXME
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
