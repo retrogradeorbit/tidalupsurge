@@ -1,10 +1,11 @@
 # Tidal Upsurge
 
-Game developed in 48 hours for 2017 Global Game Jam.
+Game developed in 48 hours for 2017 Global Game Jam. Developed in ClojureScript using the InfiniteLives gamejam library.
 
 [PLAY IT NOW!](https://retrogradeorbit.github.io/ggj17/)
 
 ![Title screen](./screenshot.png)
+![Game screen](./screenshot-02.png)
 
 ## Overview
 
