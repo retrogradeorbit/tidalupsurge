@@ -39,6 +39,6 @@ get live reloading, nor a REPL.
 
 ## License
 
-Copyright © 2017 FIXME
+Copyright © 2017 Crispin Wellington & Tim Metcalf
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
