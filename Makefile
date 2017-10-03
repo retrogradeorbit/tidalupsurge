@@ -6,7 +6,7 @@ IMG_PUBLIC=$(subst build,resources/public,$(IMG))
 SFX_SOURCE=$(wildcard resources/public/sfx/*.ogg)
 SFX=$(subst resources/public,build,$(SFX_SOURCE))
 ME=$(shell basename $(shell pwd))
-REPO=git@github.com:retrogradeorbit/ggj17.git
+REPO=git@github.com:retrogradeorbit/tigalupsurge.git
 
 all: $(APP) $(CSS) $(IDX) $(IMG) $(SFX) #$(MUSIC)
 
